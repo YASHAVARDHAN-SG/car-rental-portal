@@ -1,7 +1,7 @@
 version: 2.1
 
 jobs:
-  build-and-test:
+  build:
     docker:
       - image: cimg/python:3.12
     steps:
@@ -36,15 +36,6 @@ jobs:
             else
               echo failed > build-logs/django-check.status
             fi
-      - run:
-          name: Run Django tests
-          command: |
-            set -o pipefail
-            if python manage.py test 2>&1 | tee build-logs/tests.log; then
-              echo success > build-logs/tests.status
-            else
-              echo failed > build-logs/tests.status
-            fi
       - store_artifacts:
           path: build-logs
           destination: build-logs
@@ -52,9 +43,55 @@ jobs:
           name: Fail if a build step failed
           command: |
             failed=0
-            for step in dependencies compile django-check tests; do
+            for step in dependencies compile django-check; do
               if [ "$(cat "build-logs/$step.status")" != "success" ]; then
                 echo "$step failed; see the build-logs artifact."
+                failed=1
+              fi
+            done
+            exit "$failed"
+
+  test:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - run:
+          name: Prepare test logs
+          command: mkdir -p test-logs
+      - run:
+          name: Install dependencies
+          command: |
+            set -o pipefail
+            if python -m pip install -r requirements.txt 2>&1 | tee test-logs/dependencies.log; then
+              echo success > test-logs/dependencies.status
+            else
+              echo failed > test-logs/dependencies.status
+            fi
+      - run:
+          name: Run Django tests
+          command: |
+            set -o pipefail
+            if [ "$(cat test-logs/dependencies.status)" = "success" ]; then
+              if python manage.py test 2>&1 | tee test-logs/tests.log; then
+                echo success > test-logs/tests.status
+              else
+                echo failed > test-logs/tests.status
+              fi
+            else
+              echo "Skipped because dependency installation failed." | tee test-logs/tests.log
+              echo failed > test-logs/tests.status
+            fi
+      - store_artifacts:
+          path: test-logs
+          destination: test-logs
+      - run:
+          name: Fail if a test step failed
+          command: |
+            failed=0
+            for step in dependencies tests; do
+              if [ "$(cat "test-logs/$step.status")" != "success" ]; then
+                echo "$step failed; see the test-logs artifact."
                 failed=1
               fi
             done
@@ -63,4 +100,7 @@ jobs:
 workflows:
   build-and-test:
     jobs:
-      - build-and-test
+      - build
+      - test:
+          requires:
+            - build
