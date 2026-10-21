@@ -1,6 +1,6 @@
 
 from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 SECRET_KEY = 'demo-key'
 DEBUG = True
 ALLOWED_HOSTS = []
@@ -8,7 +8,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
  'django.contrib.admin','django.contrib.auth','django.contrib.contenttypes',
  'django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles',
- 'rest_framework','car',
+ 'car',
 ]
 
 MIDDLEWARE = [
@@ -20,7 +20,7 @@ MIDDLEWARE = [
  'django.contrib.messages.middleware.MessageMiddleware',
 ]
 
-ROOT_URLCONF = 'Car_Rental.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATES = [{
  'BACKEND':'django.template.backends.django.DjangoTemplates',

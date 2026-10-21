@@ -1,0 +1,66 @@
+version: 2.1
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - run:
+          name: Prepare build logs
+          command: mkdir -p build-logs
+      - run:
+          name: Install dependencies
+          command: |
+            set -o pipefail
+            if python -m pip install -r requirements.txt 2>&1 | tee build-logs/dependencies.log; then
+              echo success > build-logs/dependencies.status
+            else
+              echo failed > build-logs/dependencies.status
+            fi
+      - run:
+          name: Compile Python files
+          command: |
+            set -o pipefail
+            if python -m compileall -q manage.py settings.py urls.py car bike bicycle 2>&1 | tee build-logs/compile.log; then
+              echo success > build-logs/compile.status
+            else
+              echo failed > build-logs/compile.status
+            fi
+      - run:
+          name: Check Django configuration
+          command: |
+            set -o pipefail
+            if python manage.py check 2>&1 | tee build-logs/django-check.log; then
+              echo success > build-logs/django-check.status
+            else
+              echo failed > build-logs/django-check.status
+            fi
+      - run:
+          name: Run Django tests
+          command: |
+            set -o pipefail
+            if python manage.py test 2>&1 | tee build-logs/tests.log; then
+              echo success > build-logs/tests.status
+            else
+              echo failed > build-logs/tests.status
+            fi
+      - store_artifacts:
+          path: build-logs
+          destination: build-logs
+      - run:
+          name: Fail if a build step failed
+          command: |
+            failed=0
+            for step in dependencies compile django-check tests; do
+              if [ "$(cat "build-logs/$step.status")" != "success" ]; then
+                echo "$step failed; see the build-logs artifact."
+                failed=1
+              fi
+            done
+            exit "$failed"
+
+workflows:
+  build-and-test:
+    jobs:
+      - build-and-test
