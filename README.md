@@ -44,7 +44,7 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 
 ## Continuous integration
 
-CircleCI runs separate `build` and `test` jobs when commits are pushed, including commits on pull-request branches. Each job checks out the code and installs dependencies from `requirements.txt`. The `build` job compiles the Python files and checks the Django configuration; after it succeeds, the `test` job runs the Django test suite. Each job uploads its logs as build artifacts, including when a check fails.
+CircleCI runs the `build`, `test`, and `security-scan` jobs when commits are pushed, including commits on pull-request branches. The `build` job installs dependencies, compiles the Python files, and checks the Django configuration. When the build succeeds, the `test` job runs the Django test suite; when tests pass, the `security-scan` job runs Trivy filesystem vulnerability, misconfiguration, and secret scans. High- and critical-severity findings fail the scan. Each job uploads its logs as build artifacts, including when a check fails.
 
 ---
 

@@ -97,6 +97,40 @@ jobs:
             done
             exit "$failed"
 
+  security-scan:
+    docker:
+      - image: aquasec/trivy:0.58.1
+        entrypoint: [""]
+    steps:
+      - checkout
+      - run:
+          name: Scan repository with Trivy
+          shell: /bin/sh -eo pipefail
+          command: |
+            mkdir -p security-logs
+            set -o pipefail
+            if trivy fs \
+              --scanners vuln,misconfig,secret \
+              --severity HIGH,CRITICAL \
+              --exit-code 1 \
+              --format table \
+              . 2>&1 | tee security-logs/trivy.log; then
+              echo success > security-logs/trivy.status
+            else
+              echo failed > security-logs/trivy.status
+            fi
+      - store_artifacts:
+          path: security-logs
+          destination: security-logs
+      - run:
+          name: Fail if the security scan failed
+          shell: /bin/sh -eo pipefail
+          command: |
+            if [ "$(cat security-logs/trivy.status)" != "success" ]; then
+              echo "Trivy found high/critical findings or the scan could not complete; see the security-logs artifact."
+              exit 1
+            fi
+
 workflows:
   build-and-test:
     jobs:
@@ -104,3 +138,6 @@ workflows:
       - test:
           requires:
             - build
+      - security-scan:
+          requires:
+            - test
