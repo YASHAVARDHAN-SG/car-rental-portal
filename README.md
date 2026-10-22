@@ -44,7 +44,7 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 
 ## Continuous integration
 
-CircleCI runs the `build`, `test`, and `security-scan` jobs when commits are pushed, including commits on pull-request branches. The `build` job installs dependencies, compiles the Python files, and checks the Django configuration. When the build succeeds, the `test` job runs the Django test suite; when tests pass, the `security-scan` job runs Trivy filesystem vulnerability, misconfiguration, and secret scans. High- and critical-severity findings fail the scan. Each job uploads its logs as build artifacts, including when a check fails.
+CircleCI runs the `build`, `test`, `sonarqube-analysis`, and `security-scan` jobs when commits are pushed, including commits on pull-request branches. The `build` job installs dependencies, compiles the Python files, and checks the Django configuration. After the build, the `test` job runs the Django test suite, followed by SonarQube code analysis and Trivy filesystem vulnerability, misconfiguration, and secret scans. High- and critical-severity Trivy findings fail the scan. Configure `SONAR_HOST_URL`, `SONAR_TOKEN`, and `SONAR_PROJECT_KEY` as CircleCI project environment variables before running the pipeline. Each job uploads its logs as build artifacts, including when a check fails.
 
 ---
 

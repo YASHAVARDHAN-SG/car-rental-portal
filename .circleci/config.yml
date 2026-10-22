@@ -97,6 +97,28 @@ jobs:
             done
             exit "$failed"
 
+  sonarqube-analysis:
+    docker:
+      - image: sonarsource/sonar-scanner-cli:11
+        entrypoint: ["/bin/sh", "-c"]
+        command: ["tail -f /dev/null"]
+    steps:
+      - checkout
+      - run:
+          name: Run SonarQube code analysis
+          shell: /bin/sh -eo pipefail
+          command: |
+            if [ -z "${SONAR_HOST_URL:-}" ] || [ -z "${SONAR_TOKEN:-}" ] || [ -z "${SONAR_PROJECT_KEY:-}" ]; then
+              echo "Set SONAR_HOST_URL, SONAR_TOKEN, and SONAR_PROJECT_KEY in CircleCI project environment variables."
+              exit 1
+            fi
+            sonar-scanner \
+              -Dsonar.host.url="$SONAR_HOST_URL" \
+              -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
+              -Dsonar.sources=car,bike,bicycle,templates,static \
+              -Dsonar.python.version=3.12 \
+              -Dsonar.exclusions="**/migrations/**,**/__pycache__/**,static/image/**"
+
   security-scan:
     docker:
       - image: aquasec/trivy:0.58.1
@@ -139,6 +161,9 @@ workflows:
       - test:
           requires:
             - build
-      - security-scan:
+      - sonarqube-analysis:
           requires:
             - test
+      - security-scan:
+          requires:
+            - sonarqube-analysis
