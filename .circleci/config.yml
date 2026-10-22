@@ -22,7 +22,7 @@ jobs:
           name: Compile Python files
           command: |
             set -o pipefail
-            if python -m compileall -q manage.py settings.py urls.py car bike bicycle 2>&1 | tee build-logs/compile.log; then
+            if python -m compileall -q manage.py settings.py urls.py wsgi.py car bike bicycle 2>&1 | tee build-logs/compile.log; then
               echo success > build-logs/compile.status
             else
               echo failed > build-logs/compile.status
@@ -154,6 +154,102 @@ jobs:
               exit 1
             fi
 
+  deploy-ec2:
+    machine:
+      image: ubuntu-2404:current
+    environment:
+      AWS_ROLE_ARN: arn:aws:iam::027401589480:role/Githubcirclecicarrental
+    steps:
+      - checkout
+      - run:
+          name: Assume AWS role with CircleCI OIDC
+          shell: /bin/bash -eo pipefail
+          command: |
+            for variable in AWS_ROLE_ARN AWS_DEFAULT_REGION ECR_REPOSITORY EC2_INSTANCE_ID; do
+              value="$(printenv "$variable" || true)"
+              if [ -z "$value" ]; then
+                echo "Required CircleCI environment variable $variable is not configured."
+                exit 1
+              fi
+            done
+
+            oidc_token="${CIRCLE_OIDC_TOKEN_V2:-${CIRCLE_OIDC_TOKEN:-}}"
+            if [ -z "$oidc_token" ]; then
+              echo "CircleCI did not provide an OIDC token. Check that this project supports OIDC tokens and the role trust policy matches this project."
+              exit 1
+            fi
+
+            sudo apt-get update
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y awscli jq
+
+            credentials="$(aws sts assume-role-with-web-identity \
+              --role-arn "$AWS_ROLE_ARN" \
+              --role-session-name "CircleCI-${CIRCLE_BUILD_NUM}" \
+              --web-identity-token "$oidc_token" \
+              --duration-seconds 3600 \
+              --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+              --output text)"
+            read -r access_key secret_key session_token <<< "$credentials"
+
+            printf 'export AWS_ACCESS_KEY_ID=%q\n' "$access_key" >> "$BASH_ENV"
+            printf 'export AWS_SECRET_ACCESS_KEY=%q\n' "$secret_key" >> "$BASH_ENV"
+            printf 'export AWS_SESSION_TOKEN=%q\n' "$session_token" >> "$BASH_ENV"
+
+      - run:
+          name: Build and publish the application image
+          shell: /bin/bash -eo pipefail
+          command: |
+            docker version
+
+            account_id="$(aws sts get-caller-identity --query Account --output text)"
+            registry="$account_id.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+            image="$registry/$ECR_REPOSITORY:$CIRCLE_SHA1"
+
+            aws ecr get-login-password --region "$AWS_DEFAULT_REGION" |
+              docker login --username AWS --password-stdin "$registry"
+            docker build --pull --tag "$image" .
+            docker push "$image"
+
+      - run:
+          name: Deploy image to EC2 through Systems Manager
+          shell: /bin/bash -eo pipefail
+          command: |
+            if [[ ! "$EC2_INSTANCE_ID" =~ ^i-[0-9a-f]+$ ]]; then
+              echo "EC2_INSTANCE_ID must be an EC2 instance ID such as i-0123456789abcdef0."
+              exit 1
+            fi
+            if [[ ! "$ECR_REPOSITORY" =~ ^[a-z0-9]+([._-][a-z0-9]+)*$ ]]; then
+              echo "ECR_REPOSITORY must be a valid lowercase ECR repository name."
+              exit 1
+            fi
+
+            account_id="$(aws sts get-caller-identity --query Account --output text)"
+            registry="$account_id.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+            image="$registry/$ECR_REPOSITORY:$CIRCLE_SHA1"
+            script_base64="$(base64 -w 0 deploy/ec2-deploy.sh)"
+            nginx_base64="$(base64 -w 0 deploy/nginx.conf)"
+            remote_command="printf '%s' '$script_base64' | base64 --decode | bash -s -- '$AWS_DEFAULT_REGION' '$registry' '$image' '$nginx_base64'"
+            parameters="$(jq -cn --arg command "$remote_command" '{commands: [$command]}')"
+
+            command_id="$(aws ssm send-command \
+              --instance-ids "$EC2_INSTANCE_ID" \
+              --document-name AWS-RunShellScript \
+              --comment "Deploy car-rental $CIRCLE_SHA1" \
+              --parameters "$parameters" \
+              --query 'Command.CommandId' \
+              --output text)"
+
+            if ! aws ssm wait command-executed \
+              --command-id "$command_id" \
+              --instance-id "$EC2_INSTANCE_ID"; then
+              aws ssm get-command-invocation \
+                --command-id "$command_id" \
+                --instance-id "$EC2_INSTANCE_ID" \
+                --query '{Status:Status,StatusDetails:StatusDetails,ResponseCode:ResponseCode,StandardOutputContent:StandardOutputContent,StandardErrorContent:StandardErrorContent}' \
+                --output json
+              exit 1
+            fi
+
 workflows:
   build-and-test:
     jobs:
@@ -167,3 +263,9 @@ workflows:
       - security-scan:
           requires:
             - sonarqube-analysis
+      - deploy-ec2:
+          requires:
+            - security-scan
+          filters:
+            branches:
+              only: main

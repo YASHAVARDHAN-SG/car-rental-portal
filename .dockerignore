@@ -1,0 +1,12 @@
+.git
+.circleci
+.vscode
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+media/
+staticfiles/
+build-logs/
+test-logs/
+security-logs/
