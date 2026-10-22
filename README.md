@@ -44,11 +44,11 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 
 ## Continuous integration
 
-CircleCI runs the `build`, `test`, `sonarqube-analysis`, and `security-scan` jobs on commits and pull-request branches. After those checks pass, the `deploy-ec2` job runs only on `main`: CircleCI assumes an AWS role through OIDC, builds and pushes the app image to Amazon ECR, and deploys it to EC2 through AWS Systems Manager (SSM). The EC2 instance pulls the image using its instance role and configures host-level Nginx to proxy HTTP traffic to the app container. The container port is bound to EC2 localhost only. High- and critical-severity Trivy findings fail the scan. Configure `SONAR_HOST_URL`, `SONAR_TOKEN`, and `SONAR_PROJECT_KEY` as CircleCI project environment variables for SonarQube. Build, test, and security-scan logs are uploaded as artifacts.
+CircleCI runs the `build` and `test` jobs on commits and pull-request branches. After both pass, the `deploy-ec2` job runs only on `main`: CircleCI assumes an AWS role through OIDC, builds and pushes the app image to Amazon ECR, and deploys it to EC2 through AWS Systems Manager (SSM). The EC2 instance pulls the image using its instance role and configures host-level Nginx to proxy HTTP traffic to the app container. The container port is bound to EC2 localhost only.
 
 ## Deploy to EC2 with Docker and ECR
 
-The repository `Dockerfile` builds the Django runtime image. CircleCI continues to use its own Python, SonarQube, and Trivy images for CI; the deploy job builds the application image and stores that image in ECR. Deployment is restricted to the `main` branch.
+The repository `Dockerfile` builds the Django runtime image. CircleCI uses Python for build and test; the deploy job builds the application image and stores that image in ECR. Deployment is restricted to the `main` branch.
 
 ### One-time AWS and EC2 setup
 
@@ -73,13 +73,8 @@ The repository `Dockerfile` builds the Django runtime image. CircleCI continues 
 
    | Variable | Value |
    | --- | --- |
-   | `AWS_DEFAULT_REGION` | ECR and EC2 AWS region |
    | `ECR_REPOSITORY` | Existing ECR repository name |
    | `EC2_INSTANCE_ID` | EC2 instance ID, for example `i-0123456789abcdef0` |
-   | `SONAR_HOST_URL` | SonarQube server URL |
-   | `SONAR_TOKEN` | SonarQube analysis token |
-   | `SONAR_PROJECT_KEY` | SonarQube project key |
-
 CircleCI does not use GitHub Actions' `permissions: id-token: write` syntax. It provides `CIRCLE_OIDC_TOKEN_V2` to jobs automatically; the `deploy-ec2` job exchanges that token for temporary AWS credentials. The workflow already restricts deployment to `main`; the IAM role trust policy should independently restrict access to the CircleCI project, this repository, and the `main` ref. Use `github.com/YASHAVARDHAN-SG/car-rental-portal` as this repository's VCS origin, not the `portfolo` repository from the separate GitHub Actions example.
 
 The role ARN is configured in the `deploy-ec2` job in `.circleci/config.yml`. The CircleCI role needs ECR image-push permission and SSM `SendCommand`/`GetCommandInvocation` permissions described above. No AWS IAM user keys or SSH private keys should be added to CircleCI. In the role trust policy, use the CircleCI OIDC provider URL `https://oidc.circleci.com/org/<CIRCLECI_ORG_ID>` and set the provider audience to the CircleCI organization UUID. Restrict the trust policy to this project's CircleCI project UUID and the `main` branch. For example, the `Condition` for a CircleCI V2 token can use:
@@ -96,6 +91,8 @@ The role ARN is configured in the `deploy-ec2` job in `.circleci/config.yml`. Th
 ```
 
 Replace both placeholders with IDs from CircleCI organization and project settings. Ensure the IAM OIDC provider and role trust policy match the token version used by the job.
+
+The AWS region is set to `us-east-1` in the CircleCI deploy job to match the reference workflow. If the ECR repository or EC2 instance is in another region, change `AWS_DEFAULT_REGION` in `.circleci/config.yml` to that region.
 
 The EC2 application is currently published over HTTP through Nginx on port 80. Configure TLS (for example, with an HTTPS load balancer or a TLS-enabled Nginx configuration) before using it to handle real user credentials.
 

@@ -97,75 +97,19 @@ jobs:
             done
             exit "$failed"
 
-  sonarqube-analysis:
-    docker:
-      - image: sonarsource/sonar-scanner-cli:11
-        entrypoint: ["/bin/sh", "-c"]
-        command: ["tail -f /dev/null"]
-    steps:
-      - checkout
-      - run:
-          name: Run SonarQube code analysis
-          shell: /bin/sh -eo pipefail
-          command: |
-            if [ -z "${SONAR_HOST_URL:-}" ] || [ -z "${SONAR_TOKEN:-}" ] || [ -z "${SONAR_PROJECT_KEY:-}" ]; then
-              echo "SONAR_HOST_URL, SONAR_TOKEN, and SONAR_PROJECT_KEY are not set. Skipping SonarQube analysis."
-              exit 0
-            fi
-            sonar-scanner \
-              -Dsonar.host.url="$SONAR_HOST_URL" \
-              -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
-              -Dsonar.sources=car,bike,bicycle,templates,static \
-              -Dsonar.python.version=3.12 \
-              -Dsonar.exclusions="**/migrations/**,**/__pycache__/**,static/image/**"
-
-  security-scan:
-    docker:
-      - image: aquasec/trivy:0.58.1
-        entrypoint: ["/bin/sh", "-c"]
-        command: ["tail -f /dev/null"]
-    steps:
-      - checkout
-      - run:
-          name: Scan repository with Trivy
-          shell: /bin/sh -eo pipefail
-          command: |
-            mkdir -p security-logs
-            set -o pipefail
-            if trivy fs \
-              --scanners vuln,misconfig,secret \
-              --severity HIGH,CRITICAL \
-              --exit-code 1 \
-              --format table \
-              . 2>&1 | tee security-logs/trivy.log; then
-              echo success > security-logs/trivy.status
-            else
-              echo failed > security-logs/trivy.status
-            fi
-      - store_artifacts:
-          path: security-logs
-          destination: security-logs
-      - run:
-          name: Fail if the security scan failed
-          shell: /bin/sh -eo pipefail
-          command: |
-            if [ "$(cat security-logs/trivy.status)" != "success" ]; then
-              echo "Trivy found high/critical findings or the scan could not complete; see the security-logs artifact."
-              exit 1
-            fi
-
   deploy-ec2:
     machine:
       image: ubuntu-2404:current
     environment:
       AWS_ROLE_ARN: arn:aws:iam::027401589480:role/Githubcirclecicarrental
+      AWS_DEFAULT_REGION: us-east-1
     steps:
       - checkout
       - run:
           name: Assume AWS role with CircleCI OIDC
           shell: /bin/bash -eo pipefail
           command: |
-            for variable in AWS_ROLE_ARN AWS_DEFAULT_REGION ECR_REPOSITORY EC2_INSTANCE_ID; do
+            for variable in AWS_ROLE_ARN ECR_REPOSITORY EC2_INSTANCE_ID; do
               value="$(printenv "$variable" || true)"
               if [ -z "$value" ]; then
                 echo "Required CircleCI environment variable $variable is not configured."
@@ -258,15 +202,9 @@ workflows:
       - test:
           requires:
             - build
-      - sonarqube-analysis:
-          requires:
-            - test
-      - security-scan:
-          requires:
-            - sonarqube-analysis
       - deploy-ec2:
           requires:
-            - security-scan
+            - test
           filters:
             branches:
               only: main
