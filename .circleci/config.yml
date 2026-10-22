@@ -109,8 +109,8 @@ jobs:
           shell: /bin/sh -eo pipefail
           command: |
             if [ -z "${SONAR_HOST_URL:-}" ] || [ -z "${SONAR_TOKEN:-}" ] || [ -z "${SONAR_PROJECT_KEY:-}" ]; then
-              echo "Set SONAR_HOST_URL, SONAR_TOKEN, and SONAR_PROJECT_KEY in CircleCI project environment variables."
-              exit 1
+              echo "SONAR_HOST_URL, SONAR_TOKEN, and SONAR_PROJECT_KEY are not set. Skipping SonarQube analysis."
+              exit 0
             fi
             sonar-scanner \
               -Dsonar.host.url="$SONAR_HOST_URL" \
