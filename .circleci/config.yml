@@ -100,7 +100,8 @@ jobs:
   security-scan:
     docker:
       - image: aquasec/trivy:0.58.1
-        entrypoint: [""]
+        entrypoint: ["/bin/sh", "-c"]
+        command: ["tail -f /dev/null"]
     steps:
       - checkout
       - run:
