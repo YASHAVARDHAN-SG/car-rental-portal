@@ -80,7 +80,22 @@ The repository `Dockerfile` builds the Django runtime image. CircleCI continues 
    | `SONAR_TOKEN` | SonarQube analysis token |
    | `SONAR_PROJECT_KEY` | SonarQube project key |
 
-The role ARN is configured in the `deploy-ec2` job in `.circleci/config.yml`. The CircleCI role needs ECR image-push permission and SSM `SendCommand`/`GetCommandInvocation` permissions described above. No AWS IAM user keys or SSH private keys should be added to CircleCI. For the trust policy, use the CircleCI OIDC provider URL and audience for your CircleCI organization, and restrict the subject claim to this project's CircleCI project UUID. The organization ID and project UUID are available in CircleCI project/organization settings; they are specific to your account and are intentionally not guessed here.
+CircleCI does not use GitHub Actions' `permissions: id-token: write` syntax. It provides `CIRCLE_OIDC_TOKEN_V2` to jobs automatically; the `deploy-ec2` job exchanges that token for temporary AWS credentials. The workflow already restricts deployment to `main`; the IAM role trust policy should independently restrict access to the CircleCI project, this repository, and the `main` ref. Use `github.com/YASHAVARDHAN-SG/car-rental-portal` as this repository's VCS origin, not the `portfolo` repository from the separate GitHub Actions example.
+
+The role ARN is configured in the `deploy-ec2` job in `.circleci/config.yml`. The CircleCI role needs ECR image-push permission and SSM `SendCommand`/`GetCommandInvocation` permissions described above. No AWS IAM user keys or SSH private keys should be added to CircleCI. In the role trust policy, use the CircleCI OIDC provider URL `https://oidc.circleci.com/org/<CIRCLECI_ORG_ID>` and set the provider audience to the CircleCI organization UUID. Restrict the trust policy to this project's CircleCI project UUID and the `main` branch. For example, the `Condition` for a CircleCI V2 token can use:
+
+```json
+{
+  "StringEquals": {
+    "oidc.circleci.com/org/<CIRCLECI_ORG_ID>:aud": "<CIRCLECI_ORG_ID>"
+  },
+  "StringLike": {
+    "oidc.circleci.com/org/<CIRCLECI_ORG_ID>:sub": "org/<CIRCLECI_ORG_ID>/project/<CIRCLECI_PROJECT_ID>/user/*/vcs-origin/github.com/YASHAVARDHAN-SG/car-rental-portal/vcs-ref/refs/heads/main"
+  }
+}
+```
+
+Replace both placeholders with IDs from CircleCI organization and project settings. Ensure the IAM OIDC provider and role trust policy match the token version used by the job.
 
 The EC2 application is currently published over HTTP through Nginx on port 80. Configure TLS (for example, with an HTTPS load balancer or a TLS-enabled Nginx configuration) before using it to handle real user credentials.
 
