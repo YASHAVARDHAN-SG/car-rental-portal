@@ -1,210 +1,107 @@
 version: 2.1
 
+# Project environment variables to set in CircleCI (Project Settings > Environment Variables):
+#   AWS_ROLE_ARN                               arn:aws:iam::<account-id>:role/Githubcirclecicarrental
+#   AWS_REGION                                 e.g. us-east-1
+#   ECR_REGISTRY                               <account-id>.dkr.ecr.<region>.amazonaws.com
+#   ECR_REPOSITORY                             e.g. car-rental-portal
+#   EC2_HOST                                   public IP / DNS of the instance
+#   EC2_USER                                   ubuntu
+
 jobs:
-  build:
+  lint:
     docker:
-      - image: cimg/python:3.12
+      - image: cimg/php:8.2
     steps:
       - checkout
       - run:
-          name: Prepare build logs
-          command: mkdir -p build-logs
-      - run:
-          name: Install dependencies
-          command: |
-            set -o pipefail
-            if python -m pip install -r requirements.txt 2>&1 | tee build-logs/dependencies.log; then
-              echo success > build-logs/dependencies.status
-            else
-              echo failed > build-logs/dependencies.status
-            fi
-      - run:
-          name: Compile Python files
-          command: |
-            set -o pipefail
-            if python -m compileall -q manage.py settings.py urls.py wsgi.py car bike bicycle 2>&1 | tee build-logs/compile.log; then
-              echo success > build-logs/compile.status
-            else
-              echo failed > build-logs/compile.status
-            fi
-      - run:
-          name: Check Django configuration
-          command: |
-            set -o pipefail
-            if python manage.py check 2>&1 | tee build-logs/django-check.log; then
-              echo success > build-logs/django-check.status
-            else
-              echo failed > build-logs/django-check.status
-            fi
-      - store_artifacts:
-          path: build-logs
-          destination: build-logs
-      - run:
-          name: Fail if a build step failed
-          command: |
-            failed=0
-            for step in dependencies compile django-check; do
-              if [ "$(cat "build-logs/$step.status")" != "success" ]; then
-                echo "$step failed; see the build-logs artifact."
-                failed=1
-              fi
-            done
-            exit "$failed"
+          name: PHP syntax check
+          command: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
 
-  test:
-    docker:
-      - image: cimg/python:3.12
-    steps:
-      - checkout
-      - run:
-          name: Prepare test logs
-          command: mkdir -p test-logs
-      - run:
-          name: Install dependencies
-          command: |
-            set -o pipefail
-            if python -m pip install -r requirements.txt 2>&1 | tee test-logs/dependencies.log; then
-              echo success > test-logs/dependencies.status
-            else
-              echo failed > test-logs/dependencies.status
-            fi
-      - run:
-          name: Run Django tests
-          command: |
-            set -o pipefail
-            if [ "$(cat test-logs/dependencies.status)" = "success" ]; then
-              if python manage.py test 2>&1 | tee test-logs/tests.log; then
-                echo success > test-logs/tests.status
-              else
-                echo failed > test-logs/tests.status
-              fi
-            else
-              echo "Skipped because dependency installation failed." | tee test-logs/tests.log
-              echo failed > test-logs/tests.status
-            fi
-      - store_artifacts:
-          path: test-logs
-          destination: test-logs
-      - run:
-          name: Fail if a test step failed
-          command: |
-            failed=0
-            for step in dependencies tests; do
-              if [ "$(cat "test-logs/$step.status")" != "success" ]; then
-                echo "$step failed; see the test-logs artifact."
-                failed=1
-              fi
-            done
-            exit "$failed"
-
-  deploy-ec2:
+  build-and-push:
     machine:
-      image: ubuntu-2404:current
-    environment:
-      AWS_ROLE_ARN: arn:aws:iam::027401589480:role/Githubcirclecicarrental
-      AWS_DEFAULT_REGION: us-east-1
+      image: ubuntu-2204:current
     steps:
       - checkout
       - run:
-          name: Assume AWS role with CircleCI OIDC
-          shell: /bin/bash -eo pipefail
+          name: Ensure AWS CLI is available
           command: |
-            for variable in AWS_ROLE_ARN ECR_REPOSITORY EC2_INSTANCE_ID; do
-              value="$(printenv "$variable" || true)"
-              if [ -z "$value" ]; then
-                echo "Required CircleCI environment variable $variable is not configured."
-                exit 1
-              fi
-            done
-
-            oidc_token="${CIRCLE_OIDC_TOKEN_V2:-}"
-            if [ -z "$oidc_token" ]; then
-              echo "CircleCI did not provide CIRCLE_OIDC_TOKEN_V2. Check OIDC token availability and the role trust policy for this project, repository, and branch."
-              exit 1
+            if ! command -v aws >/dev/null; then
+              curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+              unzip -q /tmp/awscliv2.zip -d /tmp
+              sudo /tmp/aws/install
             fi
-
-            sudo apt-get update
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y awscli jq
-
-            credentials="$(aws sts assume-role-with-web-identity \
+            aws --version
+      - run:
+          name: Assume AWS role via OIDC
+          command: |
+            CREDS=$(aws sts assume-role-with-web-identity \
               --role-arn "$AWS_ROLE_ARN" \
-              --role-session-name "CircleCI-${CIRCLE_BUILD_NUM}" \
-              --web-identity-token "$oidc_token" \
+              --role-session-name "circleci-$CIRCLE_WORKFLOW_JOB_ID" \
+              --web-identity-token "$CIRCLE_OIDC_TOKEN_V2" \
               --duration-seconds 3600 \
-              --output json)"
-            access_key="$(printf '%s' "$credentials" | jq -r '.Credentials.AccessKeyId // empty')"
-            secret_key="$(printf '%s' "$credentials" | jq -r '.Credentials.SecretAccessKey // empty')"
-            session_token="$(printf '%s' "$credentials" | jq -r '.Credentials.SessionToken // empty')"
-
-            printf 'export AWS_ACCESS_KEY_ID=%q\n' "$access_key" >> "$BASH_ENV"
-            printf 'export AWS_SECRET_ACCESS_KEY=%q\n' "$secret_key" >> "$BASH_ENV"
-            printf 'export AWS_SESSION_TOKEN=%q\n' "$session_token" >> "$BASH_ENV"
-
+              --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+              --output text)
+            AK=$(printf '%s\n' "$CREDS" | cut -f1)
+            SK=$(printf '%s\n' "$CREDS" | cut -f2)
+            ST=$(printf '%s\n' "$CREDS" | cut -f3)
+            echo "export AWS_ACCESS_KEY_ID=$AK" >> "$BASH_ENV"
+            echo "export AWS_SECRET_ACCESS_KEY=$SK" >> "$BASH_ENV"
+            echo "export AWS_SESSION_TOKEN=$ST" >> "$BASH_ENV"
       - run:
-          name: Build and publish the application image
-          shell: /bin/bash -eo pipefail
+          name: Log in to ECR
           command: |
-            docker version
-
-            account_id="$(aws sts get-caller-identity --query Account --output text)"
-            registry="$account_id.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
-            image="$registry/$ECR_REPOSITORY:$CIRCLE_SHA1"
-
-            aws ecr get-login-password --region "$AWS_DEFAULT_REGION" |
-              docker login --username AWS --password-stdin "$registry"
-            docker build --pull --tag "$image" .
-            docker push "$image"
-
+            aws ecr get-login-password --region "$AWS_REGION" \
+              | docker login --username AWS --password-stdin "$ECR_REGISTRY"
       - run:
-          name: Deploy image to EC2 through Systems Manager
-          shell: /bin/bash -eo pipefail
+          name: Build image
           command: |
-            if [[ ! "$EC2_INSTANCE_ID" =~ ^i-[0-9a-f]+$ ]]; then
-              echo "EC2_INSTANCE_ID must be an EC2 instance ID such as i-0123456789abcdef0."
-              exit 1
-            fi
-            if [[ ! "$ECR_REPOSITORY" =~ ^[a-z0-9]+([._-][a-z0-9]+)*$ ]]; then
-              echo "ECR_REPOSITORY must be a valid lowercase ECR repository name."
-              exit 1
-            fi
+            docker build \
+              -t "$ECR_REGISTRY/$ECR_REPOSITORY:$CIRCLE_SHA1" \
+              -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" .
+      - run:
+          name: Push image
+          command: |
+            docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$CIRCLE_SHA1"
+            docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
 
-            account_id="$(aws sts get-caller-identity --query Account --output text)"
-            registry="$account_id.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
-            image="$registry/$ECR_REPOSITORY:$CIRCLE_SHA1"
-            script_base64="$(base64 -w 0 deploy/ec2-deploy.sh)"
-            nginx_base64="$(base64 -w 0 deploy/nginx.conf)"
-            remote_command="printf '%s' '$script_base64' | base64 --decode | bash -s -- '$AWS_DEFAULT_REGION' '$registry' '$image' '$nginx_base64'"
-            parameters="$(jq -cn --arg command "$remote_command" '{commands: [$command]}')"
-
-            command_id="$(aws ssm send-command \
-              --instance-ids "$EC2_INSTANCE_ID" \
-              --document-name AWS-RunShellScript \
-              --comment "Deploy car-rental $CIRCLE_SHA1" \
-              --parameters "$parameters" \
-              --query 'Command.CommandId' \
-              --output text)"
-
-            if ! aws ssm wait command-executed \
-              --command-id "$command_id" \
-              --instance-id "$EC2_INSTANCE_ID"; then
-              aws ssm get-command-invocation \
-                --command-id "$command_id" \
-                --instance-id "$EC2_INSTANCE_ID" \
-                --query '{Status:Status,StatusDetails:StatusDetails,ResponseCode:ResponseCode,StandardOutputContent:StandardOutputContent,StandardErrorContent:StandardErrorContent}' \
-                --output json
-              exit 1
-            fi
+  deploy:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:REPLACE_WITH_YOUR_KEY_FINGERPRINT"
+      - run:
+          name: Trust EC2 host key
+          command: |
+            mkdir -p ~/.ssh
+            ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+      - run:
+          name: Copy compose file and deploy script
+          command: |
+            scp docker-compose.prod.yml deploy/deploy.sh "$EC2_USER@$EC2_HOST:car-rental/"
+      - run:
+          name: Run deploy on EC2
+          command: |
+            ssh "$EC2_USER@$EC2_HOST" \
+              "AWS_REGION=$AWS_REGION ECR_REGISTRY=$ECR_REGISTRY ECR_REPOSITORY=$ECR_REPOSITORY IMAGE_TAG=$CIRCLE_SHA1 bash car-rental/deploy.sh"
+      - run:
+          name: Smoke test
+          command: curl --retry 10 --retry-delay 5 --retry-connrefused -fsS -o /dev/null "http://$EC2_HOST/"
 
 workflows:
-  build-and-test:
+  ci-cd:
     jobs:
-      - build
-      - test:
-          requires:
-            - build
-      - deploy-ec2:
-          requires:
-            - test
+      - lint
+      - build-and-push:
+          requires: [lint]
+          filters:
+            branches:
+              only: main
+      - deploy:
+          requires: [build-and-push]
           filters:
             branches:
               only: main

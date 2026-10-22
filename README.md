@@ -55,20 +55,19 @@ The repository `Dockerfile` builds the Django runtime image. CircleCI uses Pytho
 1. Create an ECR repository in the same AWS region as the EC2 instance. Set `ECR_REPOSITORY` to its repository name (not the full registry URI).
 2. Configure the IAM role `arn:aws:iam::027401589480:role/Githubcirclecicarrental` to trust CircleCI's OIDC identity provider for this CircleCI organization and project. Limit the trust policy to this project and grant the role only the ECR permissions needed to authenticate and push to the application repository. The deploy job exchanges CircleCI's OIDC token for temporary role credentials; it does not use IAM user access keys. If this role currently trusts GitHub Actions, add/configure CircleCI's OIDC provider and trust policy as well—GitHub's OIDC token cannot be used by CircleCI.
 3. Attach an instance profile to EC2 that includes `AmazonSSMManagedInstanceCore` and ECR pull permissions (for example, `AmazonEC2ContainerRegistryReadOnly`). Ensure the SSM Agent is installed and the instance is online in Systems Manager. Docker must already be installed, and the instance needs outbound HTTPS access to SSM, ECR, and package repositories (or corresponding VPC endpoints). Separately, the CircleCI OIDC role also needs `ssm:SendCommand` permission scoped to this EC2 instance and the `AWS-RunShellScript` document, plus `ssm:GetCommandInvocation`. The deploy script installs and configures Nginx as the default port-80 site on this dedicated instance, proxying to the app container on `127.0.0.1:8000`; it replaces the enabled Nginx `default` site. Configure the instance security group to allow HTTP on port 80. SSH is not used; port 22 can remain closed. Do not expose port 8000 publicly.
-4. Create the app's persistent data directory and environment file on EC2:
+4. Create the Compose working directory and environment file in the Ubuntu user's home directory on EC2. The deployment should run Compose from `~/car-rental`; the `docker-compose.prod.yml` file is copied there on each deployment, while `.env` is created once and kept out of source control:
 
    ```bash
-   sudo mkdir -p /opt/car-rental/data
-   sudo tee /opt/car-rental/.env >/dev/null <<'EOF'
+   mkdir -p ~/car-rental/data
+   tee ~/car-rental/.env >/dev/null <<'EOF'
    DJANGO_DEBUG=False
    DJANGO_SECRET_KEY=replace-with-a-long-random-secret
    DJANGO_ALLOWED_HOSTS=your-ec2-public-dns,your-domain.example
-   DJANGO_DB_PATH=/app/data/db.sqlite3
    EOF
-   sudo chmod 600 /opt/car-rental/.env
+   chmod 600 ~/car-rental/.env
    ```
 
-   Replace the example secret and hosts before deployment. Keep this file on the instance; do not commit it. SQLite data is persisted in `/opt/car-rental/data` across container replacements.
+   Replace the example secret and hosts before deployment. Keep this file on the instance; do not commit it. Compose sets `DJANGO_DB_PATH=/app/data/db.sqlite3`; SQLite data persists in `~/car-rental/data` across container replacements. The deployment script must export `APP_IMAGE` to the full ECR image URI before running `docker compose -f docker-compose.prod.yml up -d`.
 5. Add these CircleCI project environment variables. Do not put secret values in the repository:
 
    | Variable | Value |

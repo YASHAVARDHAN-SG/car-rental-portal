@@ -1,0 +1,12 @@
+services:
+  web:
+    image: ${APP_IMAGE:?APP_IMAGE must be set by the deployment script}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    environment:
+      DJANGO_DB_PATH: /app/data/db.sqlite3
+    volumes:
+      - ./data:/app/data
