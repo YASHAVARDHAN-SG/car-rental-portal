@@ -267,6 +267,352 @@ header.shadow {
     }
 }
 
+.storefront {
+    min-height: 100vh;
+    background: #f7f8fb;
+}
+
+.site-header {
+    position: relative;
+    background: #fff;
+    box-shadow: 0 2px 12px rgb(15 54 55 / 8%);
+}
+
+.site-header .nav {
+    min-height: 68px;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.site-header .logo {
+    color: #165ab8;
+    font-size: 1.4rem;
+}
+
+.site-header .navbar {
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.site-header .navbar a,
+.nav-greeting {
+    color: #344054;
+    font-size: 0.9rem;
+    text-transform: none;
+}
+
+.site-header .navbar a:hover {
+    color: #165ab8;
+    border-bottom-color: #165ab8;
+}
+
+.storefront-main {
+    min-height: calc(100vh - 68px);
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+}
+
+.storefront-heading {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.storefront-heading h1 {
+    margin-bottom: 0.65rem;
+    color: #24334f;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.storefront-heading h1 span {
+    color: #165ab8;
+}
+
+.storefront-heading h2 {
+    color: #24334f;
+    font-size: 1.25rem;
+}
+
+.car-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.car-card {
+    overflow: hidden;
+    border: 1px solid #e4e7ec;
+    border-radius: 0.4rem;
+    background: #fff;
+    box-shadow: 0 3px 10px rgb(16 24 40 / 8%);
+}
+
+.car-photo {
+    display: block;
+    width: calc(100% - 1.25rem);
+    height: 180px;
+    margin: 0.625rem auto 0;
+    border-radius: 0.2rem;
+    background: #eef3f8;
+    object-fit: cover;
+}
+
+.car-photo-placeholder {
+    display: grid;
+    place-items: center;
+    color: #165ab8;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.car-card-content {
+    padding: 0.85rem 1rem 1rem;
+}
+
+.car-card-content h3 {
+    margin-bottom: 0.4rem;
+    color: #24334f;
+    font-size: 1.05rem;
+}
+
+.car-price {
+    margin-bottom: 0.9rem;
+    color: #475467;
+    font-size: 0.95rem;
+}
+
+.car-price span {
+    font-size: inherit;
+}
+
+.car-card .btn,
+.auth-submit {
+    display: inline-block;
+    width: auto;
+    max-width: none;
+    padding: 0.65rem 1.1rem;
+    border: 0;
+    border-radius: 0.25rem;
+    background: #155ab6;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    text-align: center;
+}
+
+.car-card .btn:hover,
+.auth-submit:hover {
+    background: #10488f;
+    color: #fff;
+}
+
+.empty-inventory {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 2rem;
+    border: 1px solid #e4e7ec;
+    border-radius: 0.5rem;
+    background: #fff;
+    text-align: center;
+}
+
+.empty-inventory h2 {
+    margin-bottom: 0.5rem;
+    color: #24334f;
+}
+
+.empty-inventory p {
+    margin-bottom: 1rem;
+    color: #475467;
+}
+
+.messages,
+.form-errors {
+    margin: 0.75rem 0;
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.3rem;
+    background: #fff1f0;
+    color: #9a271f;
+    font-size: 0.9rem;
+}
+
+.messages {
+    background: #ecfdf3;
+    color: #067647;
+}
+
+.auth-page,
+.booking-page {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 1.5rem;
+    background: linear-gradient(rgb(18 35 60 / 55%), rgb(18 35 60 / 55%)), url("image/banner2.jpg") center / cover fixed;
+}
+
+.auth-card,
+.booking-card {
+    width: min(100%, 440px);
+    padding: 2rem;
+    border: 1px solid #e4e7ec;
+    border-radius: 0.6rem;
+    background: #fff;
+    box-shadow: 0 12px 40px rgb(16 24 40 / 20%);
+}
+
+.auth-card > .logo,
+.booking-card > .logo {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: #165ab8;
+}
+
+.auth-card h1,
+.booking-card h1 {
+    margin-bottom: 0.4rem;
+    color: #24334f;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.auth-intro {
+    margin-bottom: 1.25rem;
+    color: #667085;
+    text-align: center;
+}
+
+.auth-card form,
+.booking-card form {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.auth-card label,
+.booking-card label {
+    margin-top: 0.4rem;
+    color: #344054;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.auth-card input,
+.booking-card input {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 0.3rem;
+    background: #fff;
+    color: #101828;
+    font: inherit;
+}
+
+.auth-card input:focus,
+.booking-card input:focus {
+    border-color: #1570ef;
+    outline: 3px solid rgb(21 112 239 / 14%);
+}
+
+.auth-card .auth-submit,
+.booking-card .auth-submit {
+    width: 100%;
+    margin-top: 0.8rem;
+}
+
+.auth-card ul,
+.auth-card .errorlist {
+    padding-left: 1.1rem;
+    color: #b42318;
+    font-size: 0.85rem;
+}
+
+.field-help {
+    color: #667085;
+    font-size: 0.78rem;
+}
+
+.auth-switch,
+.auth-back {
+    display: block;
+    margin-top: 1rem;
+    color: #475467;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.auth-switch a,
+.auth-back {
+    color: #165ab8;
+}
+
+.booking-card {
+    width: min(100%, 520px);
+}
+
+.booking-photo {
+    display: block;
+    width: min(100%, 280px);
+    height: 150px;
+    margin: 1rem auto;
+    border-radius: 0.3rem;
+    object-fit: cover;
+}
+
+.booking-rate {
+    margin-bottom: 0.8rem;
+    color: #475467;
+    text-align: center;
+}
+
+.booking-total {
+    margin-top: 0.5rem;
+    color: #24334f;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+@media (max-width: 760px) {
+    .car-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .site-header .nav {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .site-header .navbar {
+        justify-content: center;
+        gap: 0.85rem;
+    }
+
+    .storefront-main {
+        padding-top: 1.25rem;
+    }
+
+    .car-list {
+        grid-template-columns: 1fr;
+    }
+
+    .car-photo {
+        height: 210px;
+    }
+
+    .auth-card,
+    .booking-card {
+        padding: 1.4rem;
+    }
+
+    .auth-page,
+    .booking-page {
+        padding: 0.8rem;
+    }
+}
+
 .home-text {
     padding-left: 130px;
 }

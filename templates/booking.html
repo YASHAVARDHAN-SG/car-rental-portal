@@ -1,1 +1,47 @@
-<form method='post'>{% csrf_token %}<input type='date' name='start_date'><input type='date' name='end_date'><button>Book</button></form>
+{% load static l10n %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Book {{ car.brand }} {{ car.name }} | DriveEase</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body class="booking-page">
+    <main class="booking-card">
+        <a class="logo" href="{% url 'home' %}">DriveEase</a>
+        <h1>{{ car.brand }} {{ car.name }} Reservation</h1>
+        {% if car.image %}
+            <img class="booking-photo" src="{% static car.image %}" alt="{{ car.brand }} {{ car.name }}">
+        {% endif %}
+        {% if error %}<p class="form-errors" role="alert">{{ error }}</p>{% endif %}
+        <p class="booking-rate">${{ car.price_per_day }} per day</p>
+        <form method="post">
+            {% csrf_token %}
+            <label for="start_date">Start date</label>
+            <input id="start_date" type="date" name="start_date" min="{{ today }}" value="{{ start_date }}" required>
+            <label for="end_date">End date</label>
+            <input id="end_date" type="date" name="end_date" min="{{ today }}" value="{{ end_date }}" required>
+            <p class="booking-total" id="booking-total" data-rate="{{ car.price_per_day|unlocalize }}">Total price: $0.00</p>
+            <button class="btn auth-submit" type="submit">Confirm Booking</button>
+        </form>
+        <a class="auth-back" href="{% url 'home' %}">Back to available cars</a>
+    </main>
+    <script>
+        const startInput = document.querySelector('#start_date');
+        const endInput = document.querySelector('#end_date');
+        const totalOutput = document.querySelector('#booking-total');
+
+        function updateTotal() {
+            const start = Date.parse(`${startInput.value}T00:00:00Z`);
+            const end = Date.parse(`${endInput.value}T00:00:00Z`);
+            const days = (end - start) / 86400000 + 1;
+            const total = days > 0 ? days * Number(totalOutput.dataset.rate) : 0;
+            totalOutput.textContent = `Total price: $${total.toFixed(2)}`;
+        }
+
+        startInput.addEventListener('change', updateTotal);
+        endInput.addEventListener('change', updateTotal);
+    </script>
+</body>
+</html>

@@ -1,1 +1,29 @@
-<form method='post'>{% csrf_token %}<input name='username'><input name='email'><input type='password' name='password1'><button>Register</button></form>
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create account | DriveEase</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body class="auth-page">
+    <main class="auth-card">
+        <a class="logo" href="{% url 'home' %}">DriveEase</a>
+        <h1>Create your account</h1>
+        <p class="auth-intro">Sign up to reserve a car.</p>
+        <form method="post" action="{% url 'register' %}">
+            {% csrf_token %}
+            {% for field in form %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+                {% if field.errors %}<div class="form-errors" role="alert">{{ field.errors }}</div>{% endif %}
+            {% endfor %}
+            <button class="btn auth-submit" type="submit">Create account</button>
+        </form>
+        <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+        <a class="auth-back" href="{% url 'home' %}">Back to available cars</a>
+    </main>
+</body>
+</html>

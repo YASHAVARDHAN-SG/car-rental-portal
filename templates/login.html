@@ -1,1 +1,38 @@
-<form method='post'>{% csrf_token %}<input name='username'><input type='password' name='password'><button>Login</button></form>
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in | DriveEase</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body class="auth-page">
+    <main class="auth-card">
+        <a class="logo" href="{% url 'home' %}">DriveEase</a>
+        <h1>Welcome back</h1>
+        <p class="auth-intro">Log in to book your next drive.</p>
+        {% if messages %}
+            <div class="messages" role="status">
+                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+            </div>
+        {% endif %}
+        {% if form.non_field_errors %}
+            <div class="form-errors" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {{ form.password.errors }}
+            <button class="btn auth-submit" type="submit">Log in</button>
+        </form>
+        <p class="auth-switch">Don't have an account? <a href="{% url 'register' %}">Create one</a></p>
+        <a class="auth-back" href="{% url 'home' %}">Back to available cars</a>
+    </main>
+</body>
+</html>

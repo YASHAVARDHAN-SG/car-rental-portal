@@ -11,11 +11,12 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 - User Login & Logout
 - Session-based authentication
 - Public car browsing, with booking restricted to logged-in users
+- Login and registration forms validate credentials and show errors
 
 ### 🚘 Car Management
 - Add, update, and delete cars via Admin Panel
 - Set car availability
-- Price per day configuration
+- Set the rental price and choose a vehicle photo from `static/image/`
 
 ### 📅 Booking System
 - Book cars by selecting start and end dates
@@ -79,6 +80,7 @@ docker exec -it "$WEB_CONTAINER" python manage.py createsuperuser
 
 This uses the running web container directly, so the admin command does not depend on Compose interpolation variables.
 Manage the rental inventory at `http://<EC2_PUBLIC_IP>/admin/` after logging in with that admin account. Cars marked unavailable are not shown on the public homepage.
+Add cars in the admin panel to populate the public car cards. Set each car's brand, name, daily price, availability, and photo. Prices on the site are displayed in USD. Visitors can browse without signing in; selecting **Book Now** prompts guests to log in or create an account, then returns them to that reservation.
 5. Configure the CircleCI SSH key whose fingerprint is used by the `deploy` job, and add these project environment variables. Do not put secret values in the repository:
 
    | Variable | Value |

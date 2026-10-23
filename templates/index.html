@@ -4,68 +4,63 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Find and book your next car with DriveEase.">
-    <title>DriveEase | Car rentals made easy</title>
+    <meta name="description" content="Browse and book cars with DriveEase.">
+    <title>DriveEase | Available cars</title>
     <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
-<body>
-    <header>
+<body class="storefront">
+    <header class="site-header">
         <nav class="nav container" aria-label="Main navigation">
             <a class="logo" href="{% url 'home' %}">DriveEase</a>
             <div class="navbar">
-                <a href="#cars">Available cars</a>
                 {% if request.user.is_authenticated %}
-                    <a href="{% url 'logout' %}">Log out</a>
+                    <span class="nav-greeting">Hello, {{ request.user.username }}!</span>
+                    <a href="{% url 'home' %}">Home</a>
+                    <a href="{% url 'logout' %}">Logout</a>
                 {% else %}
-                    <a href="{% url 'login' %}">Log in</a>
+                    <a href="{% url 'home' %}">Home</a>
+                    <a href="{% url 'login' %}">Login</a>
                     <a href="{% url 'register' %}">Create account</a>
                 {% endif %}
             </div>
         </nav>
     </header>
-
-    <main>
-        <section class="home" id="home">
-            <div class="home-text">
-                <span>YOUR NEXT JOURNEY STARTS HERE</span>
-                <h1>Find a car for<br>wherever life takes you.</h1>
-                <p>Browse available cars and book the dates that work for you.</p>
-                <a class="btn" href="#cars">Browse cars</a>
+    <main class="container storefront-main">
+        {% if messages %}
+            <div class="messages" role="status">
+                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
             </div>
+        {% endif %}
+        <section class="storefront-heading">
+            <h1>Welcome to <span>DriveEase</span></h1>
+            <h2>Available Cars for Rent</h2>
         </section>
-
-        <section class="container inventory" id="cars">
-            <div class="heading">
-                <span>OUR FLEET</span>
-                <h2>Cars available to rent</h2>
-                <p>Choose a car and reserve it for your next trip.</p>
-            </div>
-
-            {% if cars %}
-                <div class="car-list">
-                    {% for car in cars %}
-                        <article class="car-card">
-                            <div class="car-card-mark" aria-hidden="true">DRIVEEASE</div>
-                            <div class="car-card-content">
-                                <p class="car-brand">{{ car.brand }}</p>
-                                <h3>{{ car.name }}</h3>
-                                <p class="car-price">₹{{ car.price_per_day }} <span>/ day</span></p>
-                                <a class="btn" href="{% url 'book_car' car.id %}">Book this car</a>
-                            </div>
-                        </article>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-inventory">
-                    <h3>No cars are available right now</h3>
-                    <p>Please check back soon. New vehicles will appear here when they are added to the fleet.</p>
-                </div>
-            {% endif %}
-        </section>
+        {% if cars %}
+            <section class="car-list" aria-label="Available cars">
+                {% for car in cars %}
+                    <article class="car-card">
+                        {% if car.image %}
+                            <img class="car-photo" src="{% static car.image %}" alt="{{ car.brand }} {{ car.name }}">
+                        {% else %}
+                            <div class="car-photo car-photo-placeholder" role="img" aria-label="No car photo selected">DriveEase</div>
+                        {% endif %}
+                        <div class="car-card-content">
+                            <h3>{{ car.brand }} {{ car.name }}</h3>
+                            <p class="car-price">${{ car.price_per_day }} <span>per day</span></p>
+                            <a class="btn" href="{% url 'book_car' car.id %}">Book Now</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="empty-inventory">
+                <h2>No cars are available right now</h2>
+                <p>Add a car in the Django admin and select a picture from the image folder to show it here.</p>
+                {% if request.user.is_staff %}
+                    <a class="btn" href="{% url 'admin:bicycle_car_add' %}">Add a car</a>
+                {% endif %}
+            </section>
+        {% endif %}
     </main>
-
-    <footer class="copyright">
-        <p>&copy; {% now "Y" %} DriveEase. Find your way.</p>
-    </footer>
 </body>
 </html>
