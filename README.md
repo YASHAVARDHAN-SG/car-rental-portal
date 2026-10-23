@@ -67,7 +67,7 @@ The repository `Dockerfile` builds the Django runtime image. The `build-image` a
    chmod 600 ~/car-rental/.env
    ```
 
-   Replace the example secret and hosts before deployment. Keep this file on the instance; do not commit it. Compose sets `DJANGO_DB_PATH=/app/data/db.sqlite3`; SQLite data persists in `~/car-rental/data` across container replacements. `deploy/deploy.sh` sets `APP_IMAGE` to the ECR image URI, authenticates to ECR using the EC2 instance profile, runs Compose, and configures host Nginx to proxy port 80 to the app on localhost port 8000.
+   Replace the example secret and hosts before deployment. Keep this file on the instance; do not commit it. Compose sets `DJANGO_DB_PATH=/app/data/db.sqlite3`; SQLite data persists in `~/car-rental/data` across container replacements. Before starting Compose, `deploy/deploy.sh` creates that host data directory and assigns it to the container's non-root UID/GID `10001`, which Django needs to write the SQLite database. The script sets `APP_IMAGE` to the ECR image URI, authenticates to ECR using the EC2 instance profile, runs Compose, and configures host Nginx to proxy port 80 to the app on localhost port 8000.
 5. Configure the CircleCI SSH key whose fingerprint is used by the `deploy` job, and add these project environment variables. Do not put secret values in the repository:
 
    | Variable | Value |

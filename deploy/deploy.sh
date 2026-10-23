@@ -50,7 +50,51 @@ aws ecr get-login-password --region "$AWS_REGION" |
 
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" config --quiet
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" pull web
+sudo install -d -o 10001 -g 10001 -m 0750 "$SCRIPT_DIR/data"
+sudo chown -R 10001:10001 "$SCRIPT_DIR/data"
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" up -d --remove-orphans
+
+container_id="$(docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" ps -q web)"
+if [[ -z "$container_id" ]]; then
+  echo "Compose did not create the web container." >&2
+  docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" ps
+  docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" logs --tail=100 web
+  exit 1
+fi
+
+healthy=false
+for attempt in $(seq 1 120); do
+  container_state="$(docker inspect --format '{{.State.Status}}' "$container_id")"
+  health_status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container_id")"
+
+  if [[ "$container_state" != "running" ]]; then
+    echo "Web container entered state '$container_state' before becoming healthy." >&2
+    docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" ps
+    docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" logs --tail=100 web
+    exit 1
+  fi
+
+  if [[ "$health_status" == "healthy" ]]; then
+    healthy=true
+    break
+  fi
+
+  if [[ "$health_status" == "unhealthy" || "$health_status" == "missing" ]]; then
+    echo "Web container health check status is '$health_status'." >&2
+    docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" ps
+    docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" logs --tail=100 web
+    exit 1
+  fi
+
+  sleep 2
+done
+
+if [[ "$healthy" != "true" ]]; then
+  echo "Timed out waiting for the web container health check." >&2
+  docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" ps
+  docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" logs --tail=100 web
+  exit 1
+fi
 
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y nginx curl
@@ -61,13 +105,12 @@ sudo nginx -t
 sudo systemctl enable --now nginx
 sudo systemctl reload nginx
 
-for attempt in $(seq 1 60); do
-  if curl --fail --silent --show-error http://127.0.0.1/ >/dev/null; then
-    echo "Deployment healthy: $APP_IMAGE"
-    exit 0
-  fi
-  sleep 2
-done
+if ! curl --fail --silent --show-error http://127.0.0.1/ >/dev/null; then
+  echo "The web container is healthy, but the Nginx proxy check failed." >&2
+  sudo journalctl -u nginx --no-pager -n 50
+  docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" ps
+  docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" logs --tail=100 web
+  exit 1
+fi
 
-docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" logs --tail=100 web
-exit 1
+echo "Deployment healthy: $APP_IMAGE"
