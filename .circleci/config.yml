@@ -115,7 +115,13 @@ jobs:
               "AWS_REGION=$AWS_REGION ECR_REGISTRY=$ECR_REGISTRY ECR_REPOSITORY=$ECR_REPOSITORY IMAGE_TAG=$CIRCLE_SHA1 bash car-rental/deploy.sh"
       - run:
           name: Smoke test
-          command: curl --retry 10 --retry-delay 5 --retry-connrefused -fsS -o /dev/null "http://$EC2_HOST/"
+          command: |
+            if ! curl --retry 10 --retry-delay 5 --retry-connrefused \
+              --connect-timeout 10 --max-time 20 \
+              -fsS -o /dev/null "http://$EC2_HOST/"; then
+              echo "External HTTP smoke test failed. Check EC2 security-group inbound TCP/80, the instance public IPv4/DNS, and its public-subnet route to an Internet Gateway."
+              exit 1
+            fi
 
 workflows:
   ci-cd:
