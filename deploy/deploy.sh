@@ -50,7 +50,8 @@ aws ecr get-login-password --region "$AWS_REGION" |
 
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" config --quiet
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" pull web
-sudo install -d -o 10001 -g 10001 -m 0750 "$SCRIPT_DIR/data"
+sudo mkdir -p "$SCRIPT_DIR/data"
+sudo chmod 0750 "$SCRIPT_DIR/data"
 sudo chown -R 10001:10001 "$SCRIPT_DIR/data"
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" up -d --remove-orphans
 
