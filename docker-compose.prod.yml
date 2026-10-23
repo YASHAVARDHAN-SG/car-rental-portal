@@ -8,6 +8,6 @@ services:
       - .env
     environment:
       DJANGO_DB_PATH: /app/data/db.sqlite3
-      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:?Set DJANGO_ALLOWED_HOSTS in .env},${PUBLIC_HOST:?PUBLIC_HOST must be set by deploy.sh}"
+      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-},${PUBLIC_HOST:?PUBLIC_HOST must be set by deploy.sh}"
     volumes:
       - ./data:/app/data
