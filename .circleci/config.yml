@@ -1,22 +1,44 @@
 version: 2.1
                             
 jobs:
-  lint:
-    docker:
-      - image: cimg/php:8.2
+  build-image:
+    machine:
+      image: ubuntu-2204:current
     steps:
       - checkout
       - run:
-          name: PHP syntax check
-          command: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+          name: Build application image
+          command: |
+            docker build --pull --tag "car-rental-portal:$CIRCLE_SHA1" .
+            docker save --output /tmp/car-rental-image.tar "car-rental-portal:$CIRCLE_SHA1"
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - car-rental-image.tar
 
-  build-and-push:
+  unit-tests:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - run:
+          name: Install Python dependencies
+          command: |
+            python -m pip install --disable-pip-version-check -r requirements.txt
+      - run:
+          name: Run Django unit tests
+          command: |
+            python manage.py test
+
+  push-image:
     machine:
       image: ubuntu-2204:current
     environment:
       AWS_ROLE_ARN: arn:aws:iam::027401589480:role/Githubcirclecicarrental
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp
       - run:
           name: Ensure AWS CLI is available
           command: |
@@ -26,10 +48,6 @@ jobs:
               sudo /tmp/aws/install
             fi
             aws --version
-      - run:
-          name: Debug OIDC token claims
-          command: |
-            python3 -c "import os,base64,json;p=os.environ['CIRCLE_OIDC_TOKEN_V2'].split('.')[1];p+='='*(-len(p)%4);print(json.dumps(json.loads(base64.urlsafe_b64decode(p)),indent=2))"
       - run:
           name: Assume AWS role via OIDC
           command: |
@@ -55,16 +73,17 @@ jobs:
             echo "export AWS_SECRET_ACCESS_KEY=$SK" >> "$BASH_ENV"
             echo "export AWS_SESSION_TOKEN=$ST" >> "$BASH_ENV"
       - run:
-          name: Log in to ECR
+          name: Log in to ECR and load built image
           command: |
+            if [ -z "${AWS_REGION:-}" ] || [ -z "${ECR_REGISTRY:-}" ] || [ -z "${ECR_REPOSITORY:-}" ]; then
+              echo "Set AWS_REGION, ECR_REGISTRY, and ECR_REPOSITORY in CircleCI project environment variables."
+              exit 1
+            fi
+            docker load --input /tmp/car-rental-image.tar
+            docker tag "car-rental-portal:$CIRCLE_SHA1" "$ECR_REGISTRY/$ECR_REPOSITORY:$CIRCLE_SHA1"
+            docker tag "car-rental-portal:$CIRCLE_SHA1" "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
             aws ecr get-login-password --region "$AWS_REGION" \
               | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-      - run:
-          name: Build image
-          command: |
-            docker build \
-              -t "$ECR_REGISTRY/$ECR_REPOSITORY:$CIRCLE_SHA1" \
-              -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" .
       - run:
           name: Push image
           command: |
@@ -100,14 +119,16 @@ jobs:
 workflows:
   ci-cd:
     jobs:
-      - lint
-      - build-and-push:
-          requires: [lint]
+      - build-image
+      - unit-tests:
+          requires: [build-image]
+      - push-image:
+          requires: [unit-tests]
           filters:
             branches:
               only: main
       - deploy:
-          requires: [build-and-push]
+          requires: [push-image]
           filters:
             branches:
               only: main

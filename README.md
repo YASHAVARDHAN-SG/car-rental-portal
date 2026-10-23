@@ -44,11 +44,11 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 
 ## Continuous integration
 
-CircleCI runs the `build` and `test` jobs on commits and pull-request branches. After both pass, the `deploy-ec2` job runs only on `main`: CircleCI assumes an AWS role through OIDC, builds and pushes the app image to Amazon ECR, and deploys it to EC2 through AWS Systems Manager (SSM). The EC2 instance pulls the image using its instance role and configures host-level Nginx to proxy HTTP traffic to the app container. The container port is bound to EC2 localhost only.
+CircleCI builds the Docker image, runs the Django unit-test job, and only then pushes the saved image to ECR. The deploy job runs after a successful push on `main`. The build image is passed between jobs using a CircleCI workspace so the tested commit's image is the one published.
 
 ## Deploy to EC2 with Docker and ECR
 
-The repository `Dockerfile` builds the Django runtime image. CircleCI uses Python for build and test; the deploy job builds the application image and stores that image in ECR. Deployment is restricted to the `main` branch.
+The repository `Dockerfile` builds the Django runtime image. The `build-image` and `unit-tests` jobs run before `push-image`; the latter assumes the AWS role through OIDC and publishes the image to ECR. Deployment is restricted to the `main` branch.
 
 ### One-time AWS and EC2 setup
 
