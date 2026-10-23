@@ -106,7 +106,8 @@ jobs:
       - run:
           name: Copy compose file and deploy script
           command: |
-            scp docker-compose.prod.yml deploy/deploy.sh "$EC2_USER@$EC2_HOST:car-rental/"
+            ssh "$EC2_USER@$EC2_HOST" "mkdir -p car-rental"
+            scp docker-compose.prod.yml deploy/deploy.sh deploy/nginx.conf "$EC2_USER@$EC2_HOST:car-rental/"
       - run:
           name: Run deploy on EC2
           command: |

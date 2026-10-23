@@ -44,7 +44,7 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 
 ## Continuous integration
 
-CircleCI builds the Docker image, runs the Django unit-test job, and only then pushes the saved image to ECR. The deploy job runs after a successful push on `main`. The build image is passed between jobs using a CircleCI workspace so the tested commit's image is the one published.
+CircleCI builds the Docker image, runs the Django unit-test job, and only then pushes the saved image to ECR. The deploy job runs after a successful push on `main`. The build image is passed between jobs using a CircleCI workspace so the tested commit's image is the one published. The deployment job copies the Compose file and deploy script to EC2 over SSH.
 
 ## Deploy to EC2 with Docker and ECR
 
@@ -54,8 +54,8 @@ The repository `Dockerfile` builds the Django runtime image. The `build-image` a
 
 1. Create an ECR repository in the same AWS region as the EC2 instance. Set `ECR_REPOSITORY` to its repository name (not the full registry URI).
 2. Configure the IAM role `arn:aws:iam::027401589480:role/Githubcirclecicarrental` to trust CircleCI's OIDC identity provider for this CircleCI organization and project. Limit the trust policy to this project and grant the role only the ECR permissions needed to authenticate and push to the application repository. The deploy job exchanges CircleCI's OIDC token for temporary role credentials; it does not use IAM user access keys. If this role currently trusts GitHub Actions, add/configure CircleCI's OIDC provider and trust policy as well—GitHub's OIDC token cannot be used by CircleCI.
-3. Attach an instance profile to EC2 that includes `AmazonSSMManagedInstanceCore` and ECR pull permissions (for example, `AmazonEC2ContainerRegistryReadOnly`). Ensure the SSM Agent is installed and the instance is online in Systems Manager. Docker must already be installed, and the instance needs outbound HTTPS access to SSM, ECR, and package repositories (or corresponding VPC endpoints). Separately, the CircleCI OIDC role also needs `ssm:SendCommand` permission scoped to this EC2 instance and the `AWS-RunShellScript` document, plus `ssm:GetCommandInvocation`. The deploy script installs and configures Nginx as the default port-80 site on this dedicated instance, proxying to the app container on `127.0.0.1:8000`; it replaces the enabled Nginx `default` site. Configure the instance security group to allow HTTP on port 80. SSH is not used; port 22 can remain closed. Do not expose port 8000 publicly.
-4. Create the Compose working directory and environment file in the Ubuntu user's home directory on EC2. The deployment should run Compose from `~/car-rental`; the `docker-compose.prod.yml` file is copied there on each deployment, while `.env` is created once and kept out of source control:
+3. Attach an EC2 instance profile that grants ECR pull access (for example, `AmazonEC2ContainerRegistryReadOnly`). Docker, the Docker Compose plugin, AWS CLI, and passwordless `sudo` for Nginx setup are required on the instance. The instance needs outbound access to ECR and package repositories. Configure its security group to allow HTTP on port 80 and SSH from trusted CircleCI job egress addresses. Do not expose port 8000 publicly.
+4. Create the Compose working directory and environment file in the Ubuntu user's home directory on EC2. The deployment copies `docker-compose.prod.yml`, `deploy.sh`, and `nginx.conf` to `~/car-rental` on every deploy; create `.env` once and keep it out of source control:
 
    ```bash
    mkdir -p ~/car-rental/data
@@ -67,31 +67,18 @@ The repository `Dockerfile` builds the Django runtime image. The `build-image` a
    chmod 600 ~/car-rental/.env
    ```
 
-   Replace the example secret and hosts before deployment. Keep this file on the instance; do not commit it. Compose sets `DJANGO_DB_PATH=/app/data/db.sqlite3`; SQLite data persists in `~/car-rental/data` across container replacements. The deployment script must export `APP_IMAGE` to the full ECR image URI before running `docker compose -f docker-compose.prod.yml up -d`.
-5. Add these CircleCI project environment variables. Do not put secret values in the repository:
+   Replace the example secret and hosts before deployment. Keep this file on the instance; do not commit it. Compose sets `DJANGO_DB_PATH=/app/data/db.sqlite3`; SQLite data persists in `~/car-rental/data` across container replacements. `deploy/deploy.sh` sets `APP_IMAGE` to the ECR image URI, authenticates to ECR using the EC2 instance profile, runs Compose, and configures host Nginx to proxy port 80 to the app on localhost port 8000.
+5. Configure the CircleCI SSH key whose fingerprint is used by the `deploy` job, and add these project environment variables. Do not put secret values in the repository:
 
    | Variable | Value |
    | --- | --- |
    | `ECR_REPOSITORY` | Existing ECR repository name |
-   | `EC2_INSTANCE_ID` | EC2 instance ID, for example `i-0123456789abcdef0` |
-CircleCI does not use GitHub Actions' `permissions: id-token: write` syntax. It provides `CIRCLE_OIDC_TOKEN_V2` to jobs automatically; the `deploy-ec2` job exchanges that token for temporary AWS credentials. The workflow already restricts deployment to `main`; the IAM role trust policy should independently restrict access to the CircleCI project, this repository, and the `main` ref. Use `github.com/YASHAVARDHAN-SG/car-rental-portal` as this repository's VCS origin, not the `portfolo` repository from the separate GitHub Actions example.
+   | `EC2_HOST` | EC2 public DNS name or IP |
+   | `EC2_USER` | SSH user, commonly `ubuntu` |
 
-The role ARN is configured in the `deploy-ec2` job in `.circleci/config.yml`. The CircleCI role needs ECR image-push permission and SSM `SendCommand`/`GetCommandInvocation` permissions described above. No AWS IAM user keys or SSH private keys should be added to CircleCI. In the role trust policy, use the CircleCI OIDC provider URL `https://oidc.circleci.com/org/<CIRCLECI_ORG_ID>` and set the provider audience to the CircleCI organization UUID. Restrict the trust policy to this project's CircleCI project UUID and the `main` branch. For example, the `Condition` for a CircleCI V2 token can use:
+The `push-image` job assumes `arn:aws:iam::027401589480:role/Githubcirclecicarrental` through CircleCI OIDC. The role trust policy should restrict access to this CircleCI project and the `main` branch, and its permissions should allow pushing to the ECR repository. The EC2 instance profile is separate and grants the instance pull access. The deploy job uses the configured CircleCI SSH key to connect to the host.
 
-```json
-{
-  "StringEquals": {
-    "oidc.circleci.com/org/<CIRCLECI_ORG_ID>:aud": "<CIRCLECI_ORG_ID>"
-  },
-  "StringLike": {
-    "oidc.circleci.com/org/<CIRCLECI_ORG_ID>:sub": "org/<CIRCLECI_ORG_ID>/project/<CIRCLECI_PROJECT_ID>/user/*/vcs-origin/github.com/YASHAVARDHAN-SG/car-rental-portal/vcs-ref/refs/heads/main"
-  }
-}
-```
-
-Replace both placeholders with IDs from CircleCI organization and project settings. Ensure the IAM OIDC provider and role trust policy match the token version used by the job.
-
-The AWS region is set to `us-east-1` in the CircleCI deploy job to match the reference workflow. If the ECR repository or EC2 instance is in another region, change `AWS_DEFAULT_REGION` in `.circleci/config.yml` to that region.
+Set `AWS_REGION` to the ECR region and `ECR_REGISTRY` to the full ECR registry URI in CircleCI. The image is pushed to both the commit SHA tag and `latest`.
 
 The EC2 application is currently published over HTTP through Nginx on port 80. Configure TLS (for example, with an HTTPS load balancer or a TLS-enabled Nginx configuration) before using it to handle real user credentials.
 
