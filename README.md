@@ -16,12 +16,13 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 ### 🚘 Car Management
 - Add, update, and delete cars via Admin Panel
 - Set car availability
-- Set the rental price and choose a vehicle photo from `static/image/`
+- Set the rental price, vehicle photo, description, fuel type, transmission, and seating capacity
 
 ### 📅 Booking System
-- Book cars by selecting start and end dates
+- Book cars by selecting travel dates, pick-up location, and drop-off location
 - Automatic total price calculation
-- User-specific bookings
+- User-specific booking history with detailed trip and vehicle specifications
+- Cancel bookings from the reservation details page; cancellations remain in history
 - Secure backend validation
 
 ### 🛠 Admin Panel

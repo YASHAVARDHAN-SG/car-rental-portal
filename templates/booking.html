@@ -14,14 +14,25 @@
         {% if car.image %}
             <img class="booking-photo" src="{% static car.image %}" alt="{{ car.brand }} {{ car.name }}">
         {% endif %}
-        {% if error %}<p class="form-errors" role="alert">{{ error }}</p>{% endif %}
+        <section class="specifications" aria-label="Car specifications">
+            <h2>Car specifications</h2>
+            <dl>
+                <div><dt>Brand</dt><dd>{{ car.brand }}</dd></div>
+                <div><dt>Model</dt><dd>{{ car.name }}</dd></div>
+                <div><dt>Fuel</dt><dd>{{ car.fuel_type|default:"Not specified" }}</dd></div>
+                <div><dt>Transmission</dt><dd>{{ car.transmission|default:"Not specified" }}</dd></div>
+                <div><dt>Seats</dt><dd>{{ car.seating_capacity }}</dd></div>
+            </dl>
+            {% if car.description %}<p>{{ car.description }}</p>{% endif %}
+        </section>
         <p class="booking-rate">${{ car.price_per_day }} per day</p>
         <form method="post">
             {% csrf_token %}
-            <label for="start_date">Start date</label>
-            <input id="start_date" type="date" name="start_date" min="{{ today }}" value="{{ start_date }}" required>
-            <label for="end_date">End date</label>
-            <input id="end_date" type="date" name="end_date" min="{{ today }}" value="{{ end_date }}" required>
+            {% for field in form %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="form-errors" role="alert">{{ field.errors }}</div>{% endif %}
+            {% endfor %}
             <p class="booking-total" id="booking-total" data-rate="{{ car.price_per_day|unlocalize }}">Total price: $0.00</p>
             <button class="btn auth-submit" type="submit">Confirm Booking</button>
         </form>

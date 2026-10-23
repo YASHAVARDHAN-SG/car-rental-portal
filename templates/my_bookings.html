@@ -1,0 +1,50 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My bookings | DriveEase</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body class="storefront">
+    <header class="site-header">
+        <nav class="nav container" aria-label="Main navigation">
+            <a class="logo" href="{% url 'home' %}">DriveEase</a>
+            <div class="navbar">
+                <a href="{% url 'home' %}">Available cars</a>
+                <a href="{% url 'logout' %}">Logout</a>
+            </div>
+        </nav>
+    </header>
+    <main class="container storefront-main">
+        <h1 class="page-title">My bookings</h1>
+        {% if messages %}
+            <div class="messages" role="status">
+                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+            </div>
+        {% endif %}
+        {% if bookings %}
+            <div class="booking-list">
+                {% for booking in bookings %}
+                    <article class="booking-list-card">
+                        <div>
+                            <p class="booking-status booking-status-{{ booking.status }}">{{ booking.get_status_display }}</p>
+                            <h2>{{ booking.car.brand }} {{ booking.car.name }}</h2>
+                            <p>{{ booking.start_date|date:"M j, Y" }} – {{ booking.end_date|date:"M j, Y" }}</p>
+                            <p>{{ booking.pickup_location }} → {{ booking.dropoff_location }}</p>
+                            <p class="car-price">${{ booking.total_price }} total</p>
+                        </div>
+                        <a class="btn" href="{% url 'booking_detail' booking.id %}">View details</a>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <section class="empty-inventory">
+                <h2>You don't have any bookings yet</h2>
+                <a class="btn" href="{% url 'home' %}">Browse available cars</a>
+            </section>
+        {% endif %}
+    </main>
+</body>
+</html>

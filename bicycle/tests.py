@@ -103,12 +103,38 @@ class BookingTests(TestCase):
 
         response = self.client.post(
             reverse('book_car', args=[self.car.id]),
-            {'start_date': start.isoformat(), 'end_date': end.isoformat()},
+            {
+                'start_date': start.isoformat(),
+                'end_date': end.isoformat(),
+                'pickup_location': 'Airport',
+                'dropoff_location': 'City Center',
+            },
         )
 
-        self.assertRedirects(response, reverse('home'))
         booking = Booking.objects.get(user=self.user, car=self.car)
+        self.assertRedirects(
+            response,
+            reverse('booking_detail', args=[booking.id]),
+        )
         self.assertEqual(booking.total_price, Decimal('120.00'))
+        self.assertEqual(booking.pickup_location, 'Airport')
+        self.assertEqual(booking.dropoff_location, 'City Center')
+
+    def test_booking_form_requires_pickup_and_dropoff_locations(self):
+        self.client.force_login(self.user)
+        start = date.today() + timedelta(days=1)
+
+        response = self.client.post(
+            reverse('book_car', args=[self.car.id]),
+            {
+                'start_date': start.isoformat(),
+                'end_date': start.isoformat(),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'This field is required.')
+        self.assertFalse(Booking.objects.exists())
 
     def test_end_date_before_start_date_does_not_create_booking(self):
         self.client.force_login(self.user)
@@ -117,9 +143,156 @@ class BookingTests(TestCase):
 
         response = self.client.post(
             reverse('book_car', args=[self.car.id]),
-            {'start_date': start.isoformat(), 'end_date': end.isoformat()},
+            {
+                'start_date': start.isoformat(),
+                'end_date': end.isoformat(),
+                'pickup_location': 'Airport',
+                'dropoff_location': 'City Center',
+            },
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'The end date must be on or after the start date.')
         self.assertFalse(Booking.objects.exists())
+
+    def test_user_can_view_own_booking_details_but_not_another_users(self):
+        booking = Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date.today() + timedelta(days=1),
+            end_date=date.today() + timedelta(days=1),
+            pickup_location='Airport',
+            dropoff_location='City Center',
+            total_price='40.00',
+        )
+        self.car.fuel_type = 'Petrol'
+        self.car.transmission = 'Automatic'
+        self.car.description = 'Compact city car'
+        self.car.save()
+        self.client.force_login(self.user)
+
+        own_response = self.client.get(
+            reverse('booking_detail', args=[booking.id]),
+        )
+
+        self.assertEqual(own_response.status_code, 200)
+        self.assertContains(own_response, 'Airport')
+        self.assertContains(own_response, 'City Center')
+        self.assertContains(own_response, 'Automatic')
+        self.assertContains(own_response, 'Compact city car')
+        self.assertContains(own_response, 'Cancel booking')
+
+        other_user = User.objects.create_user(
+            username='another-renter',
+            password='StrongPassword!234',
+        )
+        self.client.force_login(other_user)
+
+        response = self.client.get(
+            reverse('booking_detail', args=[booking.id]),
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_my_bookings_only_lists_the_signed_in_users_bookings(self):
+        booking = Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date.today() + timedelta(days=1),
+            end_date=date.today() + timedelta(days=1),
+            pickup_location='Airport',
+            dropoff_location='City Center',
+            total_price='40.00',
+        )
+        other_user = User.objects.create_user(
+            username='another-renter',
+            password='StrongPassword!234',
+        )
+        Booking.objects.create(
+            user=other_user,
+            car=self.car,
+            start_date=date.today() + timedelta(days=1),
+            end_date=date.today() + timedelta(days=1),
+            pickup_location='Other Airport',
+            dropoff_location='Other City',
+            total_price='40.00',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('my_bookings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Airport')
+        self.assertContains(response, reverse('booking_detail', args=[booking.id]))
+        self.assertNotContains(response, 'Other Airport')
+
+    def test_user_can_cancel_own_booking_and_booking_remains_in_history(self):
+        booking = Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date.today() + timedelta(days=1),
+            end_date=date.today() + timedelta(days=1),
+            pickup_location='Airport',
+            dropoff_location='City Center',
+            total_price='40.00',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('cancel_booking', args=[booking.id]),
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('booking_detail', args=[booking.id]),
+        )
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.CANCELLED)
+        self.assertIsNotNone(booking.cancelled_at)
+
+    def test_user_cannot_cancel_another_users_booking(self):
+        booking = Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date.today() + timedelta(days=1),
+            end_date=date.today() + timedelta(days=1),
+            pickup_location='Airport',
+            dropoff_location='City Center',
+            total_price='40.00',
+        )
+        other_user = User.objects.create_user(
+            username='another-renter',
+            password='StrongPassword!234',
+        )
+        self.client.force_login(other_user)
+
+        response = self.client.post(
+            reverse('cancel_booking', args=[booking.id]),
+        )
+
+        self.assertEqual(response.status_code, 404)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.CONFIRMED)
+
+    def test_get_request_cannot_cancel_booking(self):
+        booking = Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date.today() + timedelta(days=1),
+            end_date=date.today() + timedelta(days=1),
+            pickup_location='Airport',
+            dropoff_location='City Center',
+            total_price='40.00',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse('cancel_booking', args=[booking.id]),
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('booking_detail', args=[booking.id]),
+        )
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.CONFIRMED)

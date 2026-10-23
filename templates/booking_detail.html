@@ -1,0 +1,70 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Booking details | DriveEase</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body class="storefront">
+    <header class="site-header">
+        <nav class="nav container" aria-label="Main navigation">
+            <a class="logo" href="{% url 'home' %}">DriveEase</a>
+            <div class="navbar">
+                <a href="{% url 'my_bookings' %}">My bookings</a>
+                <a href="{% url 'logout' %}">Logout</a>
+            </div>
+        </nav>
+    </header>
+    <main class="container storefront-main">
+        {% if messages %}
+            <div class="messages" role="status">
+                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+            </div>
+        {% endif %}
+        <article class="booking-details-card">
+            <div class="booking-details-heading">
+                <div>
+                    <p class="booking-status booking-status-{{ booking.status }}">{{ booking.get_status_display }}</p>
+                    <h1>Your {{ booking.car.brand }} {{ booking.car.name }} booking</h1>
+                </div>
+                {% if booking.car.image %}
+                    <img class="booking-details-photo" src="{% static booking.car.image %}" alt="{{ booking.car.brand }} {{ booking.car.name }}">
+                {% endif %}
+            </div>
+            <section class="details-section">
+                <h2>Trip details</h2>
+                <dl>
+                    <div><dt>Pick-up date</dt><dd>{{ booking.start_date|date:"F j, Y" }}</dd></div>
+                    <div><dt>Drop-off date</dt><dd>{{ booking.end_date|date:"F j, Y" }}</dd></div>
+                    <div><dt>Pick-up location</dt><dd>{{ booking.pickup_location }}</dd></div>
+                    <div><dt>Drop-off location</dt><dd>{{ booking.dropoff_location }}</dd></div>
+                    <div><dt>Booking total</dt><dd>${{ booking.total_price }}</dd></div>
+                </dl>
+            </section>
+            <section class="details-section">
+                <h2>Car specifications</h2>
+                <dl>
+                    <div><dt>Brand</dt><dd>{{ booking.car.brand }}</dd></div>
+                    <div><dt>Model</dt><dd>{{ booking.car.name }}</dd></div>
+                    <div><dt>Price per day</dt><dd>${{ booking.car.price_per_day }}</dd></div>
+                    <div><dt>Fuel type</dt><dd>{{ booking.car.fuel_type|default:"Not specified" }}</dd></div>
+                    <div><dt>Transmission</dt><dd>{{ booking.car.transmission|default:"Not specified" }}</dd></div>
+                    <div><dt>Seating capacity</dt><dd>{{ booking.car.seating_capacity }}</dd></div>
+                </dl>
+                {% if booking.car.description %}<p>{{ booking.car.description }}</p>{% endif %}
+            </section>
+            <div class="booking-actions">
+                <a class="btn secondary-btn" href="{% url 'my_bookings' %}">All my bookings</a>
+                {% if booking.status == 'confirmed' %}
+                    <form method="post" action="{% url 'cancel_booking' booking.id %}" onsubmit="return confirm('Cancel this car booking?');">
+                        {% csrf_token %}
+                        <button class="btn cancel-btn" type="submit">Cancel booking</button>
+                    </form>
+                {% endif %}
+            </div>
+        </article>
+    </main>
+</body>
+</html>
