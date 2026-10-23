@@ -21,7 +21,7 @@ jobs:
     machine:
       image: ubuntu-2204:current
     environment:
-      AWS_ROLE_ARN: arn:aws:iam::027401589480:role/instanceRole
+      AWS_ROLE_ARN: arn:aws:iam::027401589480:role/Githubcirclecicarrental
     steps:
       - checkout
       - run:
