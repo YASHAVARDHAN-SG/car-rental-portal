@@ -53,7 +53,7 @@ The repository `Dockerfile` builds the Django runtime image. The `build-image` a
 ### One-time AWS and EC2 setup
 
 1. Create an ECR repository in the same AWS region as the EC2 instance. Set `ECR_REPOSITORY` to its repository name (not the full registry URI).
-2. Configure the IAM role `arn:aws:iam::027401589480:role/Githubcirclecicarrental` to trust CircleCI's OIDC identity provider for this CircleCI organization and project. Limit the trust policy to this project and grant the role only the ECR permissions needed to authenticate and push to the application repository. The deploy job exchanges CircleCI's OIDC token for temporary role credentials; it does not use IAM user access keys. If this role currently trusts GitHub Actions, add/configure CircleCI's OIDC provider and trust policy as well—GitHub's OIDC token cannot be used by CircleCI.
+2. Configure the IAM role to trust CircleCI's OIDC identity provider for this CircleCI organization and project. Limit the trust policy to this project and grant the role only the ECR permissions needed to authenticate and push to the application repository. The deploy job exchanges CircleCI's OIDC token for temporary role credentials; it does not use IAM user access keys. If this role currently trusts GitHub Actions, add/configure CircleCI's OIDC provider and trust policy as well—GitHub's OIDC token cannot be used by CircleCI.
 3. Attach an EC2 instance profile that grants ECR pull access (for example, `AmazonEC2ContainerRegistryReadOnly`). Docker, the Docker Compose plugin, AWS CLI, and passwordless `sudo` for Nginx setup are required on the instance. The instance needs outbound access to ECR and package repositories. Configure its security group to allow HTTP on port 80 and SSH from trusted CircleCI job egress addresses. Do not expose port 8000 publicly.
 4. Create the Compose working directory and environment file in the Ubuntu user's home directory on EC2. The deployment copies `docker-compose.prod.yml`, `deploy.sh`, and `nginx.conf` to `~/car-rental` on every deploy; create `.env` once and keep it out of source control:
 
@@ -67,7 +67,17 @@ The repository `Dockerfile` builds the Django runtime image. The `build-image` a
    chmod 600 ~/car-rental/.env
    ```
 
-   Replace the example secret and domain before deployment. Keep this file on the instance; do not commit it. `DJANGO_ALLOWED_HOSTS` is a comma-separated list of custom domains; the deploy job automatically adds the EC2 host from `EC2_HOST` to the container's allowed hosts. Compose sets `DJANGO_DB_PATH=/app/data/db.sqlite3`; SQLite data persists in `~/car-rental/data` across container replacements. Before starting Compose, `deploy/deploy.sh` creates that host data directory and assigns it to the container's non-root UID/GID `10001`, which Django needs to write the SQLite database. The script sets `APP_IMAGE` to the ECR image URI, authenticates to ECR using the EC2 instance profile, runs Compose, and configures host Nginx to proxy port 80 to the app on localhost port 8000.
+   Replace the example secret and domain before deployment. Keep this file on the instance; do not commit it. `DJANGO_ALLOWED_HOSTS` is a comma-separated list of custom domains; the deploy job automatically adds the EC2 host from `EC2_HOST` to the container's allowed hosts. Compose sets `DJANGO_DB_PATH=/app/data/db.sqlite3`; SQLite data persists in `~/car-rental/data` across container replacements. Before starting Compose, `deploy/deploy.sh` creates that host data directory and assigns it to the container's non-root UID/GID `10001`, which Django needs to write the SQLite database. The script sets `APP_IMAGE` to the ECR image URI, authenticates to ECR using the EC2 instance profile, runs Compose, and configures host Nginx to proxy port 80 to the app on localhost port 8000. Default Compose values allow `ps`, `logs`, and `exec` to work interactively without deployment variables; use the deploy script to update the service.
+
+To create a Django admin account over SSH, run this from `~/car-rental`:
+
+```bash
+WEB_CONTAINER="$(docker ps -q --filter label=com.docker.compose.service=web | head -n 1)"
+test -n "$WEB_CONTAINER" || { echo "The web container is not running."; exit 1; }
+docker exec -it "$WEB_CONTAINER" python manage.py createsuperuser
+```
+
+This uses the running web container directly, so the admin command does not depend on Compose interpolation variables.
 5. Configure the CircleCI SSH key whose fingerprint is used by the `deploy` job, and add these project environment variables. Do not put secret values in the repository:
 
    | Variable | Value |
@@ -76,7 +86,7 @@ The repository `Dockerfile` builds the Django runtime image. The `build-image` a
    | `EC2_HOST` | EC2 public DNS name or IP |
    | `EC2_USER` | SSH user, commonly `ubuntu` |
 
-The `push-image` job assumes `arn:aws:iam::027401589480:role/Githubcirclecicarrental` through CircleCI OIDC. The role trust policy should restrict access to this CircleCI project and the `main` branch, and its permissions should allow pushing to the ECR repository. The EC2 instance profile is separate and grants the instance pull access. The deploy job uses the configured CircleCI SSH key to connect to the host.
+The `push-image` job assumes through CircleCI OIDC. The role trust policy should restrict access to this CircleCI project and the `main` branch, and its permissions should allow pushing to the ECR repository. The EC2 instance profile is separate and grants the instance pull access. The deploy job uses the configured CircleCI SSH key to connect to the host.
 
 Set `AWS_REGION` to the ECR region and `ECR_REGISTRY` to the full ECR registry URI in CircleCI. The image is pushed to both the commit SHA tag and `latest`.
 
