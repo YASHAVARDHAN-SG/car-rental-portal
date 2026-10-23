@@ -97,7 +97,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:REPLACE_WITH_YOUR_KEY_FINGERPRINT"
+            - "SHA256:Z5O6VBR43pliobaMddwCKte6C9rLQG+BzTQ+1meVEN4"
       - run:
           name: Trust EC2 host key
           command: |
