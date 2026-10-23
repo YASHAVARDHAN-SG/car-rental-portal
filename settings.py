@@ -20,7 +20,7 @@ if not DEBUG:
 INSTALLED_APPS = [
  'django.contrib.admin','django.contrib.auth','django.contrib.contenttypes',
  'django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles',
- 'car',
+ 'car','bicycle',
 ]
 
 MIDDLEWARE = [
@@ -66,3 +66,4 @@ STORAGES = {
 }
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+LOGIN_URL = '/login/'

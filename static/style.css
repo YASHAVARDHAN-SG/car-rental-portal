@@ -154,6 +154,119 @@ header.shadow {
     color: var(--main-color);
 }
 
+.inventory {
+    padding-top: 4rem;
+    padding-bottom: 5rem;
+}
+
+.inventory .heading h2 {
+    margin: 0.5rem 0;
+    font-size: 2rem;
+}
+
+.car-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.car-card {
+    overflow: hidden;
+    border: 1px solid #e8edf0;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(15 54 55 / 8%);
+}
+
+.car-card-mark {
+    display: grid;
+    min-height: 150px;
+    place-items: center;
+    background: linear-gradient(135deg, #e6f4fc, #f6f6f6);
+    color: var(--main-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+}
+
+.car-card-content {
+    padding: 1.25rem;
+}
+
+.car-brand {
+    color: #6a7379;
+    font-size: 0.9rem;
+}
+
+.car-card h3 {
+    margin: 0.2rem 0 0.8rem;
+    font-size: 1.35rem;
+}
+
+.car-price {
+    margin-bottom: 1rem;
+    color: var(--main-color);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.car-price span {
+    color: #6a7379;
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.car-card .btn {
+    display: inline-block;
+    padding: 0.65rem 1rem;
+    border-radius: 0.25rem;
+    background: var(--main-color);
+    color: #fff;
+}
+
+.empty-inventory {
+    margin-top: 2rem;
+    padding: 2rem;
+    border-radius: 0.75rem;
+    background: #f6f6f6;
+    text-align: center;
+}
+
+.empty-inventory h3 {
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 640px) {
+    .nav {
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .navbar {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+
+    .navbar a {
+        font-size: 0.8rem;
+    }
+
+    .home {
+        min-height: 520px;
+    }
+
+    .home-text {
+        padding: 5rem 1.5rem 0;
+    }
+
+    .home-text h1 {
+        font-size: 2rem;
+    }
+}
+
 .home-text {
     padding-left: 130px;
 }

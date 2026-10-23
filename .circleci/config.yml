@@ -26,6 +26,10 @@ jobs:
           command: |
             python -m pip install --disable-pip-version-check -r requirements.txt
       - run:
+          name: Collect static assets
+          command: |
+            python manage.py collectstatic --noinput
+      - run:
           name: Run Django unit tests
           command: |
             python manage.py test

@@ -27,7 +27,6 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-@login_required
 def home(request):
     return render(request, 'index.html', {'cars': Car.objects.filter(available=True)})
 
