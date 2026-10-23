@@ -112,7 +112,7 @@ jobs:
           name: Run deploy on EC2
           command: |
             ssh "$EC2_USER@$EC2_HOST" \
-              "AWS_REGION=$AWS_REGION ECR_REGISTRY=$ECR_REGISTRY ECR_REPOSITORY=$ECR_REPOSITORY IMAGE_TAG=$CIRCLE_SHA1 bash car-rental/deploy.sh"
+              "PUBLIC_HOST=$EC2_HOST AWS_REGION=$AWS_REGION ECR_REGISTRY=$ECR_REGISTRY ECR_REPOSITORY=$ECR_REPOSITORY IMAGE_TAG=$CIRCLE_SHA1 bash car-rental/deploy.sh"
       - run:
           name: Smoke test
           command: |

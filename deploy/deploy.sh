@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.prod.yml"
 NGINX_CONFIG="$SCRIPT_DIR/nginx.conf"
 
-required_variables=(AWS_REGION ECR_REGISTRY ECR_REPOSITORY IMAGE_TAG)
+required_variables=(AWS_REGION ECR_REGISTRY ECR_REPOSITORY IMAGE_TAG PUBLIC_HOST)
 for variable in "${required_variables[@]}"; do
   if [[ -z "${!variable:-}" ]]; then
     echo "Required environment variable $variable is not set." >&2
