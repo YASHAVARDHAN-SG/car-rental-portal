@@ -1,7 +1,6 @@
 version: 2.1
 
 # Project environment variables to set in CircleCI (Project Settings > Environment Variables):
-#   AWS_ROLE_ARN                               arn:aws:iam::<account-id>:role/Githubcirclecicarrental
 #   AWS_REGION                                 e.g. us-east-1
 #   ECR_REGISTRY                               <account-id>.dkr.ecr.<region>.amazonaws.com
 #   ECR_REPOSITORY                             e.g. car-rental-portal
@@ -21,6 +20,8 @@ jobs:
   build-and-push:
     machine:
       image: ubuntu-2204:current
+    environment:
+      AWS_ROLE_ARN: arn:aws:iam::027401589480:role/instanceRole
     steps:
       - checkout
       - run:
@@ -35,6 +36,14 @@ jobs:
       - run:
           name: Assume AWS role via OIDC
           command: |
+            if [ -z "${AWS_ROLE_ARN:-}" ]; then
+              echo "AWS_ROLE_ARN is empty. Set the IAM role ARN in the build-and-push job environment."
+              exit 1
+            fi
+            if [ -z "${CIRCLE_OIDC_TOKEN_V2:-}" ]; then
+              echo "CircleCI did not provide CIRCLE_OIDC_TOKEN_V2. Check CircleCI OIDC availability and the IAM role trust policy."
+              exit 1
+            fi
             CREDS=$(aws sts assume-role-with-web-identity \
               --role-arn "$AWS_ROLE_ARN" \
               --role-session-name "circleci-$CIRCLE_WORKFLOW_JOB_ID" \
