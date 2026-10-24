@@ -10,7 +10,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from .booking_forms import BookingForm
 from .forms import RegistrationForm
-from .models import Booking, Car
+from .models import Bike, Booking, Car
 
 
 def login_view(request):
@@ -42,7 +42,19 @@ def logout_view(request):
 
 def home(request):
     cars = Car.objects.filter(available=True)
-    return render(request, 'index.html', {'cars': cars})
+    motorcycles = Bike.objects.filter(
+        available=True,
+        vehicle_type=Bike.VehicleType.MOTORCYCLE,
+    )
+    scooters = Bike.objects.filter(
+        available=True,
+        vehicle_type=Bike.VehicleType.SCOOTER,
+    )
+    return render(
+        request,
+        'index.html',
+        {'cars': cars, 'motorcycles': motorcycles, 'scooters': scooters},
+    )
 
 
 @login_required

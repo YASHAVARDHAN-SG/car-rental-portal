@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">Original illustration for a KTM Duke 390 listing</title>
+  <rect width="640" height="360" rx="24" fill="#f2f4ed"/>
+  <path d="M0 278h640v82H0z" fill="#e1e6dc"/>
+  <circle cx="160" cy="265" r="66" fill="#263238"/><circle cx="160" cy="265" r="41" fill="#f2f4ed" stroke="#89969a" stroke-width="9"/>
+  <circle cx="480" cy="265" r="66" fill="#263238"/><circle cx="480" cy="265" r="41" fill="#f2f4ed" stroke="#89969a" stroke-width="9"/>
+  <path d="m164 254 97-96 91 96H164l79-68 95 5 77 63" fill="none" stroke="#ef6c00" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+  <path d="m251 157 40-16 48 9 20 29-77 4z" fill="#263238"/>
+  <path d="m351 162 59-8 45 32-82 13z" fill="#37474f"/>
+  <path d="m368 193 65-15 40 32-71 18z" fill="#f57c00"/>
+  <path d="m436 187 49-16 27 12-43 20z" fill="#263238"/>
+  <path d="m461 201 22 51" stroke="#455a64" stroke-linecap="round" stroke-width="12"/>
+  <path d="m257 157-22-24m-13 0h41" stroke="#455a64" stroke-linecap="round" stroke-width="10"/>
+  <text x="320" y="56" fill="#263238" font-family="Arial,sans-serif" font-size="23" font-weight="700" text-anchor="middle">DUKE 390</text>
+</svg>

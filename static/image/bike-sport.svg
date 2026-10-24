@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Sport bike</title>
+  <desc id="desc">Illustration of a red sport motorcycle.</desc>
+  <rect width="640" height="360" rx="24" fill="#f7eeee"/>
+  <path d="M0 279h640v81H0z" fill="#e8dfe0"/>
+  <circle cx="168" cy="267" r="67" fill="#242c38"/>
+  <circle cx="168" cy="267" r="43" fill="#f7eeee" stroke="#a6aab1" stroke-width="9"/>
+  <circle cx="475" cy="267" r="67" fill="#242c38"/>
+  <circle cx="475" cy="267" r="43" fill="#f7eeee" stroke="#a6aab1" stroke-width="9"/>
+  <path d="m171 257 100-98 85 98H171l78-70 92 5 76 65" fill="none" stroke="#b9323b" stroke-linecap="round" stroke-linejoin="round" stroke-width="17"/>
+  <path d="m253 157 45-12 48 7 25 22-75 2z" fill="#252f3c"/>
+  <path d="m354 158 61 1 39 28-84 2z" fill="#333d4c"/>
+  <path d="m367 189 55-10 37 33-68 13z" fill="#d53a44"/>
+  <path d="m430 188 52-14 30 8-39 18z" fill="#242d3a"/>
+  <path d="m460 201 23 52" stroke="#394454" stroke-linecap="round" stroke-width="12"/>
+  <path d="m261 159-22-25m-12 0h40" stroke="#34485d" stroke-linecap="round" stroke-width="10"/>
+  <path d="m160 266 18 0m288 0h18" stroke="#a6aab1" stroke-linecap="round" stroke-width="7"/>
+</svg>

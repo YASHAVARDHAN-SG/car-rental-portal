@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">Original illustration for a Yamaha R1 listing</title>
+  <rect width="640" height="360" rx="24" fill="#edf2f8"/>
+  <path d="M0 278h640v82H0z" fill="#dfe6ed"/>
+  <circle cx="160" cy="265" r="66" fill="#202a37"/><circle cx="160" cy="265" r="41" fill="#edf2f8" stroke="#91a1b3" stroke-width="9"/>
+  <circle cx="480" cy="265" r="66" fill="#202a37"/><circle cx="480" cy="265" r="41" fill="#edf2f8" stroke="#91a1b3" stroke-width="9"/>
+  <path d="m164 254 99-98 91 98H164l79-70 93 6 77 64" fill="none" stroke="#1764ac" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+  <path d="m250 157 44-18 48 9 22 29-79 4z" fill="#202a37"/>
+  <path d="m355 162 59-10 47 32-85 15z" fill="#334658"/>
+  <path d="m367 193 71-16 42 31-78 20z" fill="#2586ce"/>
+  <path d="m439 186 48-16 28 12-43 20z" fill="#202a37"/>
+  <path d="m461 201 22 51" stroke="#40566c" stroke-linecap="round" stroke-width="12"/>
+  <path d="m257 157-23-25m-12 0h41" stroke="#40566c" stroke-linecap="round" stroke-width="10"/>
+  <text x="320" y="56" fill="#202a37" font-family="Arial,sans-serif" font-size="23" font-weight="700" text-anchor="middle">R1 SUPERSPORT</text>
+</svg>

@@ -16,10 +16,14 @@
                 {% if request.user.is_authenticated %}
                     <span class="nav-greeting">Hello, {{ request.user.username }}!</span>
                     <a href="{% url 'home' %}">Home</a>
+                    <a href="#motorcycles">Motorcycles</a>
+                    <a href="#scooters">Scooters</a>
                     <a href="{% url 'my_bookings' %}">My bookings</a>
                     <a href="{% url 'logout' %}">Logout</a>
                 {% else %}
                     <a href="{% url 'home' %}">Home</a>
+                    <a href="#motorcycles">Motorcycles</a>
+                    <a href="#scooters">Scooters</a>
                     <a href="{% url 'login' %}">Login</a>
                     <a href="{% url 'register' %}">Create account</a>
                 {% endif %}
@@ -34,10 +38,12 @@
         {% endif %}
         <section class="storefront-heading">
             <h1>Welcome to <span>DriveEase</span></h1>
-            <h2>Available Cars for Rent</h2>
+            <h2>Cars and Bikes for Rent</h2>
         </section>
-        {% if cars %}
-            <section class="car-list" aria-label="Available cars">
+        <section class="inventory-section" id="cars">
+            <h2 class="inventory-title">Available Cars for Rent</h2>
+            {% if cars %}
+            <div class="car-list" aria-label="Available cars">
                 {% for car in cars %}
                     <article class="car-card">
                         {% if car.image %}
@@ -57,16 +63,83 @@
                         </div>
                     </article>
                 {% endfor %}
-            </section>
-        {% else %}
-            <section class="empty-inventory">
+            </div>
+            {% else %}
+                <div class="empty-inventory">
                 <h2>No cars are available right now</h2>
                 <p>Add a car in the Django admin and select a picture from the image folder to show it here.</p>
                 {% if request.user.is_staff %}
                     <a class="btn" href="{% url 'admin:bicycle_car_add' %}">Add a car</a>
                 {% endif %}
-            </section>
-        {% endif %}
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="inventory-section bike-inventory" id="motorcycles">
+            <h2 class="inventory-title">Motorcycles for Rent</h2>
+            {% if motorcycles %}
+                <div class="car-list" aria-label="Available bikes">
+                    {% for bike in motorcycles %}
+                        <article class="car-card">
+                            {% if bike.image %}
+                                <img class="car-photo" src="{% static bike.image %}" alt="{{ bike.brand }} {{ bike.name }}">
+                            {% else %}
+                                <div class="car-photo car-photo-placeholder" role="img" aria-label="No bike photo selected">DriveEase</div>
+                            {% endif %}
+                            <div class="car-card-content">
+                                <h3>{{ bike.brand }} {{ bike.name }}</h3>
+                                <p class="car-price">${{ bike.price_per_day }} <span>per day</span></p>
+                                <p class="car-spec-summary">
+                                    {{ bike.engine_cc }} cc · {{ bike.transmission|default:"Transmission not specified" }}
+                                </p>
+                                {% if bike.description %}<p class="car-spec-summary">{{ bike.description }}</p>{% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-inventory">
+                    <h2>No motorcycles are available right now</h2>
+                    <p>Add motorcycles in Django admin and choose one of the included illustrations.</p>
+                    {% if request.user.is_staff %}
+                        <a class="btn" href="{% url 'admin:bicycle_bike_add' %}">Add a bike</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="inventory-section bike-inventory" id="scooters">
+            <h2 class="inventory-title">Scooters for Rent</h2>
+            {% if scooters %}
+                <div class="car-list" aria-label="Available scooters">
+                    {% for bike in scooters %}
+                        <article class="car-card">
+                            {% if bike.image %}
+                                <img class="car-photo" src="{% static bike.image %}" alt="{{ bike.brand }} {{ bike.name }}">
+                            {% else %}
+                                <div class="car-photo car-photo-placeholder" role="img" aria-label="No scooter image selected">DriveEase</div>
+                            {% endif %}
+                            <div class="car-card-content">
+                                <h3>{{ bike.brand }} {{ bike.name }}</h3>
+                                <p class="car-price">${{ bike.price_per_day }} <span>per day</span></p>
+                                <p class="car-spec-summary">
+                                    {{ bike.engine_cc }} cc · {{ bike.transmission|default:"Transmission not specified" }}
+                                </p>
+                                {% if bike.description %}<p class="car-spec-summary">{{ bike.description }}</p>{% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-inventory">
+                    <h2>No scooters are available right now</h2>
+                    <p>Add scooters in Django admin and choose one of the included illustrations.</p>
+                    {% if request.user.is_staff %}
+                        <a class="btn" href="{% url 'admin:bicycle_bike_add' %}">Add a scooter</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </section>
     </main>
 </body>
 </html>

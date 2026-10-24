@@ -16,6 +16,20 @@ CAR_IMAGE_CHOICES = [
     ('image/verna.jpg', 'Verna'),
 ]
 
+BIKE_IMAGE_CHOICES = [
+    ('image/bike-commuter.svg', 'City commuter'),
+    ('image/bike-sport.svg', 'Sport bike'),
+    ('image/bike-adventure.svg', 'Adventure bike'),
+    ('image/ktm-duke-390.svg', 'KTM Duke 390'),
+    ('image/royal-enfield-classic-350.svg', 'Royal Enfield Bullet Classic 350'),
+    ('image/yamaha-r1.svg', 'Yamaha R1'),
+    ('image/yamaha-r2.svg', 'Yamaha R2'),
+    ('image/yamaha-r15.svg', 'Yamaha R15'),
+    ('image/honda-activa.svg', 'Honda Activa'),
+    ('image/suzuki-access.svg', 'Suzuki Access'),
+    ('image/honda-dio.svg', 'Honda Dio'),
+]
+
 
 class Car(models.Model):
     name = models.CharField(max_length=100)
@@ -30,6 +44,30 @@ class Car(models.Model):
 
     def __str__(self):
         return f"{self.brand} {self.name}"
+
+
+class Bike(models.Model):
+    class VehicleType(models.TextChoices):
+        MOTORCYCLE = 'motorcycle', 'Motorcycle'
+        SCOOTER = 'scooter', 'Scooter'
+
+    name = models.CharField(max_length=100)
+    brand = models.CharField(max_length=100)
+    vehicle_type = models.CharField(
+        max_length=12,
+        choices=VehicleType.choices,
+        default=VehicleType.MOTORCYCLE,
+    )
+    price_per_day = models.DecimalField(max_digits=8, decimal_places=2)
+    image = models.CharField(max_length=100, choices=BIKE_IMAGE_CHOICES, blank=True)
+    description = models.TextField(blank=True)
+    engine_cc = models.PositiveSmallIntegerField(default=125)
+    transmission = models.CharField(max_length=30, blank=True)
+    available = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.brand} {self.name}"
+
 
 class Booking(models.Model):
     class Status(models.TextChoices):

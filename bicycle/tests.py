@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Booking, Car
+from .models import Bike, Booking, Car
 
 
 class HomePageTests(TestCase):
@@ -38,6 +38,43 @@ class HomePageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'No cars are available right now')
+
+    def test_home_page_shows_motorcycles_and_scooters_in_separate_sections(self):
+        motorcycle = Bike.objects.create(
+            name='Duke 390',
+            brand='KTM',
+            price_per_day='20.00',
+            image='image/ktm-duke-390.svg',
+            engine_cc=125,
+            vehicle_type=Bike.VehicleType.MOTORCYCLE,
+            available=True,
+        )
+        scooter = Bike.objects.create(
+            name='Activa',
+            brand='Honda',
+            price_per_day='10.00',
+            image='image/honda-activa.svg',
+            engine_cc=110,
+            vehicle_type=Bike.VehicleType.SCOOTER,
+            available=True,
+        )
+        Bike.objects.create(
+            name='Unavailable',
+            brand='Example',
+            price_per_day='25.00',
+            available=False,
+        )
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, motorcycle.name)
+        self.assertContains(response, scooter.name)
+        self.assertContains(response, 'ktm-duke-390.')
+        self.assertContains(response, 'honda-activa.')
+        self.assertContains(response, 'Motorcycles for Rent')
+        self.assertContains(response, 'Scooters for Rent')
+        self.assertNotContains(response, 'Example Unavailable')
 
 
 class AuthenticationTests(TestCase):

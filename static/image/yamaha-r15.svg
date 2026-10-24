@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">Original illustration for a Yamaha R15 listing</title>
+  <rect width="640" height="360" rx="24" fill="#edf3f8"/>
+  <path d="M0 278h640v82H0z" fill="#dce6ee"/>
+  <circle cx="160" cy="265" r="66" fill="#222d39"/><circle cx="160" cy="265" r="41" fill="#edf3f8" stroke="#91a3b3" stroke-width="9"/>
+  <circle cx="480" cy="265" r="66" fill="#222d39"/><circle cx="480" cy="265" r="41" fill="#edf3f8" stroke="#91a3b3" stroke-width="9"/>
+  <path d="m164 254 96-96 94 96H164l77-69 96 5 76 64" fill="none" stroke="#dc3945" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+  <path d="m250 158 42-16 49 8 22 30-79 4z" fill="#222d39"/>
+  <path d="m354 162 60-8 46 31-84 15z" fill="#344252"/>
+  <path d="m367 194 69-16 43 30-80 19z" fill="#e44a54"/>
+  <path d="m439 187 48-16 28 12-43 20z" fill="#222d39"/>
+  <path d="m461 201 22 51" stroke="#435669" stroke-linecap="round" stroke-width="12"/>
+  <path d="m256 158-22-25m-13 0h41" stroke="#435669" stroke-linecap="round" stroke-width="10"/>
+  <text x="320" y="56" fill="#222d39" font-family="Arial,sans-serif" font-size="23" font-weight="700" text-anchor="middle">R15 SPORT</text>
+</svg>

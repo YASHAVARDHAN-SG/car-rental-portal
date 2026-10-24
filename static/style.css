@@ -619,6 +619,22 @@ header.shadow {
     font-size: 0.85rem;
 }
 
+.inventory-section {
+    margin-top: 1.75rem;
+}
+
+.inventory-title {
+    margin-bottom: 1rem;
+    color: #24334f;
+    font-size: 1.4rem;
+}
+
+.bike-inventory {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e4e7ec;
+}
+
 .specifications,
 .details-section {
     margin: 1.2rem 0;

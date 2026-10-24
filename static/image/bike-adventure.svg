@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Adventure bike</title>
+  <desc id="desc">Illustration of a green adventure touring motorcycle.</desc>
+  <rect width="640" height="360" rx="24" fill="#eef4e9"/>
+  <path d="M0 279h640v81H0z" fill="#dfe7d7"/>
+  <circle cx="169" cy="267" r="67" fill="#29333d"/>
+  <circle cx="169" cy="267" r="43" fill="#eef4e9" stroke="#9eac9a" stroke-width="9"/>
+  <circle cx="474" cy="267" r="67" fill="#29333d"/>
+  <circle cx="474" cy="267" r="43" fill="#eef4e9" stroke="#9eac9a" stroke-width="9"/>
+  <path d="m173 256 94-94 88 94H173l75-69 93 4 73 65" fill="none" stroke="#608746" stroke-linecap="round" stroke-linejoin="round" stroke-width="17"/>
+  <path d="m259 158 31-28 42 8 17 35-65 2z" fill="#354656"/>
+  <path d="m342 164 52-4 42 28-79 7z" fill="#465b49"/>
+  <path d="m367 191 61-9 38 34-81 16z" fill="#789b4e"/>
+  <path d="m436 188 45-17 29 12-39 19z" fill="#293943"/>
+  <path d="m461 202 22 51" stroke="#394454" stroke-linecap="round" stroke-width="12"/>
+  <path d="m263 159-22-25m-12 0h40" stroke="#34485d" stroke-linecap="round" stroke-width="10"/>
+  <path d="m160 266 18 0m287 0h18" stroke="#9eac9a" stroke-linecap="round" stroke-width="7"/>
+</svg>

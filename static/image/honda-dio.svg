@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title">
+  <title id="title">Original illustration for a Honda Dio listing</title>
+  <rect width="640" height="360" rx="24" fill="#f8eff0"/>
+  <path d="M0 278h640v82H0z" fill="#eddfdf"/>
+  <circle cx="180" cy="265" r="57" fill="#293541"/><circle cx="180" cy="265" r="34" fill="#f8eff0" stroke="#b29ca0" stroke-width="8"/>
+  <circle cx="458" cy="265" r="57" fill="#293541"/><circle cx="458" cy="265" r="34" fill="#f8eff0" stroke="#b29ca0" stroke-width="8"/>
+  <path d="M180 253h111l71-5 62 17" fill="none" stroke="#cf3947" stroke-linecap="round" stroke-width="17"/>
+  <path d="M265 169q27-29 67-18l31 18 13 68-44 12-68-19-27-31z" fill="#e34b58" stroke="#352f39" stroke-linejoin="round" stroke-width="8"/>
+  <path d="m270 166-27-24m-9 0h44m119 38 35-11 16 8-29 15" fill="none" stroke="#48414a" stroke-linecap="round" stroke-width="9"/>
+  <path d="m308 197 28 44" stroke="#fdebed" stroke-linecap="round" stroke-width="7"/>
+  <text x="320" y="56" fill="#352f39" font-family="Arial,sans-serif" font-size="23" font-weight="700" text-anchor="middle">DIO SCOOTER</text>
+</svg>

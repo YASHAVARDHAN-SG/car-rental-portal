@@ -18,6 +18,12 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 - Set car availability
 - Set the rental price, vehicle photo, description, fuel type, transmission, and seating capacity
 
+### 🏍 Bike Listings
+- Browse available bikes alongside the car listings
+- Browse separate motorcycle and scooter sections
+- Manage bike type, price, availability, engine capacity, transmission, description, and illustration in Django Admin
+- Choose from the included commuter, sport, adventure, and named motorcycle/scooter illustrations
+
 ### 📅 Booking System
 - Book cars by selecting travel dates, pick-up location, and drop-off location
 - Automatic total price calculation

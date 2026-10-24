@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">City commuter bike</title>
+  <desc id="desc">Illustration of a blue city commuter motorcycle.</desc>
+  <rect width="640" height="360" rx="24" fill="#eaf4fb"/>
+  <path d="M0 279h640v81H0z" fill="#d9e6ed"/>
+  <circle cx="171" cy="266" r="67" fill="#27364a"/>
+  <circle cx="171" cy="266" r="43" fill="#eaf4fb" stroke="#91a5b5" stroke-width="9"/>
+  <circle cx="470" cy="266" r="67" fill="#27364a"/>
+  <circle cx="470" cy="266" r="43" fill="#eaf4fb" stroke="#91a5b5" stroke-width="9"/>
+  <path d="m176 255 85-94 84 94H176l67-65 85 4 63 61" fill="none" stroke="#2676b8" stroke-linecap="round" stroke-linejoin="round" stroke-width="17"/>
+  <path d="m252 157 41-4 27 20-52 4z" fill="#26364a"/>
+  <path d="m333 153 57 6 31 30-61-3z" fill="#314963"/>
+  <path d="m361 188 58-6 30 37-66 4z" fill="#2182c4"/>
+  <path d="m430 191 48-8 23 9-38 12z" fill="#28394d"/>
+  <path d="m461 199 22 53" stroke="#3a4b5f" stroke-linecap="round" stroke-width="12"/>
+  <path d="m260 158-23-26m-13 0h39" stroke="#34485d" stroke-linecap="round" stroke-width="10"/>
+  <path d="m163 265 18 0m280 0h18" stroke="#92a8b8" stroke-linecap="round" stroke-width="7"/>
+</svg>
