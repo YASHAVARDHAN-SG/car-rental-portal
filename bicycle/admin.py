@@ -14,6 +14,18 @@ class BikeAdmin(admin.ModelAdmin):
     list_display = ('brand', 'name', 'vehicle_type', 'price_per_day', 'engine_cc', 'transmission', 'available')
     list_filter = ('vehicle_type', 'available', 'brand')
     search_fields = ('brand', 'name')
+    fields = (
+        'brand',
+        'name',
+        'vehicle_type',
+        'price_per_day',
+        'engine_cc',
+        'transmission',
+        'description',
+        'uploaded_image',
+        'image',
+        'available',
+    )
 
 
 @admin.register(Booking)

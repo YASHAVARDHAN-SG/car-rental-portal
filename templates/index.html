@@ -81,7 +81,9 @@
                 <div class="car-list" aria-label="Available bikes">
                     {% for bike in motorcycles %}
                         <article class="car-card">
-                            {% if bike.image %}
+                            {% if bike.uploaded_image %}
+                                <img class="car-photo" src="{{ bike.uploaded_image.url }}" alt="{{ bike.brand }} {{ bike.name }}">
+                            {% elif bike.image %}
                                 <img class="car-photo" src="{% static bike.image %}" alt="{{ bike.brand }} {{ bike.name }}">
                             {% else %}
                                 <div class="car-photo car-photo-placeholder" role="img" aria-label="No bike photo selected">DriveEase</div>
@@ -114,7 +116,9 @@
                 <div class="car-list" aria-label="Available scooters">
                     {% for bike in scooters %}
                         <article class="car-card">
-                            {% if bike.image %}
+                            {% if bike.uploaded_image %}
+                                <img class="car-photo" src="{{ bike.uploaded_image.url }}" alt="{{ bike.brand }} {{ bike.name }}">
+                            {% elif bike.image %}
                                 <img class="car-photo" src="{% static bike.image %}" alt="{{ bike.brand }} {{ bike.name }}">
                             {% else %}
                                 <div class="car-photo car-photo-placeholder" role="img" aria-label="No scooter image selected">DriveEase</div>

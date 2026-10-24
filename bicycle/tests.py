@@ -1,9 +1,15 @@
 from datetime import date, timedelta
 from decimal import Decimal
+from io import BytesIO
+from pathlib import Path
+import tempfile
 
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.test import override_settings
 from django.urls import reverse
+from PIL import Image
 
 from .models import Bike, Booking, Car
 
@@ -32,6 +38,29 @@ class HomePageTests(TestCase):
         self.assertContains(response, available_car.name)
         self.assertContains(response, 'image/honda-city.')
         self.assertNotContains(response, 'Example Unavailable')
+
+    def test_bike_local_image_upload_is_saved_and_displayed(self):
+        image_buffer = BytesIO()
+        Image.new('RGB', (2, 2), color='blue').save(image_buffer, format='PNG')
+        image_buffer.seek(0)
+        uploaded_image = SimpleUploadedFile(
+            'local-bike.png',
+            image_buffer.read(),
+            content_type='image/png',
+        )
+
+        with tempfile.TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                bike = Bike.objects.create(
+                    name='Local image bike',
+                    brand='Test',
+                    price_per_day='20.00',
+                    uploaded_image=uploaded_image,
+                )
+                response = self.client.get(reverse('home'))
+
+                self.assertTrue(Path(bike.uploaded_image.path).is_file())
+                self.assertContains(response, bike.uploaded_image.url)
 
     def test_home_page_shows_an_empty_state_without_available_cars(self):
         response = self.client.get(reverse('home'))
@@ -75,6 +104,22 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'Motorcycles for Rent')
         self.assertContains(response, 'Scooters for Rent')
         self.assertNotContains(response, 'Example Unavailable')
+
+
+class BikeAdminTests(TestCase):
+    def test_bike_admin_form_offers_a_local_image_upload(self):
+        admin_user = User.objects.create_superuser(
+            username='admin',
+            email='admin@example.com',
+            password='StrongPassword!234',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:bicycle_bike_add'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="uploaded_image"')
+        self.assertContains(response, 'type="file"')
 
 
 class AuthenticationTests(TestCase):

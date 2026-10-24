@@ -14,8 +14,8 @@ COPY . .
 
 RUN addgroup --system --gid 10001 app \
     && adduser --system --uid 10001 --ingroup app app \
-    && mkdir -p /app/data /app/staticfiles \
-    && chown app:app /app/data /app/staticfiles
+    && mkdir -p /app/data /app/media /app/staticfiles \
+    && chown app:app /app/data /app/media /app/staticfiles
 
 USER app
 

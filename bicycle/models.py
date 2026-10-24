@@ -60,6 +60,12 @@ class Bike(models.Model):
     )
     price_per_day = models.DecimalField(max_digits=8, decimal_places=2)
     image = models.CharField(max_length=100, choices=BIKE_IMAGE_CHOICES, blank=True)
+    uploaded_image = models.ImageField(
+        'Upload image from your device',
+        upload_to='bikes/',
+        blank=True,
+        help_text='If uploaded, this image is shown instead of the bundled illustration.',
+    )
     description = models.TextField(blank=True)
     engine_cc = models.PositiveSmallIntegerField(default=125)
     transmission = models.CharField(max_length=30, blank=True)

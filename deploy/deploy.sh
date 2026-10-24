@@ -50,9 +50,11 @@ aws ecr get-login-password --region "$AWS_REGION" |
 
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" config --quiet
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" pull web
-sudo mkdir -p "$SCRIPT_DIR/data"
+sudo mkdir -p "$SCRIPT_DIR/data" "$SCRIPT_DIR/media"
 sudo chmod 0750 "$SCRIPT_DIR/data"
 sudo chown -R 10001:10001 "$SCRIPT_DIR/data"
+sudo chmod 0755 "$SCRIPT_DIR/media"
+sudo chown -R 10001:10001 "$SCRIPT_DIR/media"
 docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" up -d --remove-orphans
 
 container_id="$(docker compose --project-directory "$SCRIPT_DIR" -f "$COMPOSE_FILE" ps -q web)"
@@ -99,7 +101,9 @@ fi
 
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y nginx curl
-sudo install -m 644 "$NGINX_CONFIG" /etc/nginx/sites-available/car-rental
+sed "s|__MEDIA_ROOT__|$SCRIPT_DIR/media|g" "$NGINX_CONFIG" \
+  | sudo tee /etc/nginx/sites-available/car-rental >/dev/null
+sudo chmod 644 /etc/nginx/sites-available/car-rental
 sudo ln -sfn /etc/nginx/sites-available/car-rental /etc/nginx/sites-enabled/car-rental
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t

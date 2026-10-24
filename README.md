@@ -23,6 +23,7 @@ A full-stack **Car Rental Management System** built using **Django**, featuring 
 - Browse separate motorcycle and scooter sections
 - Manage bike type, price, availability, engine capacity, transmission, description, and illustration in Django Admin
 - Choose from the included commuter, sport, adventure, and named motorcycle/scooter illustrations
+- Upload a local bike image (up to 10 MB) in Django Admin; uploaded files persist under `~/car-rental/media` across deployments and take precedence over the bundled illustration
 
 ### 📅 Booking System
 - Book cars by selecting travel dates, pick-up location, and drop-off location

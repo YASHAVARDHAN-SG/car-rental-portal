@@ -11,3 +11,4 @@ services:
       DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-},${PUBLIC_HOST:-localhost}"
     volumes:
       - ./data:/app/data
+      - ./media:/app/media
